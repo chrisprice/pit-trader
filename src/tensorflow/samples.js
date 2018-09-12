@@ -5,7 +5,9 @@ const concat = (data, sample) => {
         return sample;
     }
     return data.map((previous, index) => {
-        const updated = previous.concat(sample[index], 0);
+        const update = sample[index];
+        const updated = previous.concat(update, 0);
+        update.dispose();
         previous.dispose();
         return updated;
     });

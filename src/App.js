@@ -1,14 +1,6 @@
-// localForage
-// toDataUrl('image/webp');
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
-
-import * as tf from '@tensorflow/tfjs';
-import * as mobilenet from '@tensorflow-models/mobilenet';
-import SquareWebcam from './SquareWebcam';
-
-import { sample, predict, train, BUY, SELL, save } from './tensorflow/classifier';
+import { BUY, SELL, create, load } from './tensorflow/classifier';
+import Webcam from './Webcam';
 
 class App extends Component {
 
@@ -17,6 +9,10 @@ class App extends Component {
     this.state = {
       mode: 'loading'
     };
+
+    load('indexeddb://model')
+      .catch(() => create())
+      .then(model => this.model = model);
     global.component = this;
   }
 
@@ -36,7 +32,7 @@ class App extends Component {
         return;
       case 'capture-sell':
         this.setState({ mode: 'train' });
-        train(console.log)
+        this.model.train(console.log)
           .then(() => {
             this.setState({ mode: 'predict' });
           });
@@ -47,37 +43,30 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.scheduleAnimationFrame();
     setInterval(() => this.next(), 5000);
   }
 
 
-  scheduleAnimationFrame() {
-    this.animationFrame = requestAnimationFrame(async () => {
-      const cameraCanvas = this.webcam.getCanvas();
-      switch (this.state.mode) {
-        case 'capture-buy': {
-          sample(BUY, cameraCanvas);
-          break;
-        }
-        case 'capture-sell': {
-          sample(SELL, cameraCanvas);
-          break;
-        }
-        case 'predict': {
-          const predictions = await predict(cameraCanvas);
-          this.setState({
-            predictions
-          })
-          break;
-        }
+  handleOnFrame = async (canvas) => {
+    switch (this.state.mode) {
+      case 'capture-buy': {
+        this.model.sample(BUY, canvas);
+        break;
       }
-      this.scheduleAnimationFrame();
-    });
-  }
-
-  componentWillUnmount() {
-    cancelAnimationFrame(this.animationFrame);
+      case 'capture-sell': {
+        this.model.sample(SELL, canvas);
+        break;
+      }
+      case 'pending-capture-buy':
+      case 'pending-capture-sell':
+      case 'predict': {
+        const predictions = await this.model.predict(canvas);
+        this.setState({
+          predictions
+        })
+        break;
+      }
+    }
   }
 
   render() {
@@ -85,13 +74,13 @@ class App extends Component {
     const buyProbability = predictions && predictions.find(({ className }) => className === BUY).probability;
     const sellProbability = predictions && predictions.find(({ className }) => className === SELL).probability;
     const side = buyProbability > sellProbability ? BUY : SELL;
-    console.log(buyProbability, sellProbability);
+    // console.log(predictions, buyProbability, sellProbability);
     return (
       <div className="App">
         {mode}
-        <SquareWebcam screenshotWidth={224} ref={ref => this.webcam = ref} />
-        <canvas ref={ref => this.canvas = ref} />
+        <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} />
         {side}
+        <button onClick={() => this.model.save('indexeddb://model')} />
       </div>
     );
   }

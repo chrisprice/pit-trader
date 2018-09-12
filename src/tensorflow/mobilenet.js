@@ -3,9 +3,14 @@ import * as mobilenet from '@tensorflow-models/mobilenet';
 const VERSION = 1;
 const ALPHA = 0.25;
 
-const modelPromise = mobilenet.load(VERSION, ALPHA);
+let modelPromise = null;
 
-const loadModel = () => modelPromise;
+const loadModel = () => {
+    if (modelPromise == null) {
+        modelPromise = mobilenet.load(VERSION, ALPHA);
+    }
+    return modelPromise;
+};
 
 export const partial = async (image) => {
     const model = await loadModel();
