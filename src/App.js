@@ -2,12 +2,23 @@ import React, { Component } from 'react';
 import { BUY, SELL, create, load } from './tensorflow/classifier';
 import Webcam from './Webcam';
 
+const WAITING_FOR_FRAME = 'waiting-for-frame';
+const WAITING_FOR_MODEL = 'waiting-for-model';
+const PENDING_CAPTURE_BUY = 'pending-capture-buy'
+const CAPTURING_BUY = 'capturing-buy'
+const PENDING_CAPTURE_SELL = 'pending-capture-sell'
+const CAPTURING_SELL = 'capturing-sell'
+const TRAINING = 'training';
+const PREDICTING = 'predicting';
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 class App extends Component {
 
   constructor() {
     super();
     this.state = {
-      mode: 'loading'
+      mode: WAITING_FOR_FRAME
     };
 
     load('indexeddb://model')
@@ -16,65 +27,79 @@ class App extends Component {
     global.component = this;
   }
 
-  next() {
-    switch (this.state.mode) {
-      case 'loading':
-        this.setState({ mode: 'pending-capture-buy' });
-        return;
-      case 'pending-capture-buy':
-        this.setState({ mode: 'capture-buy' });
-        return;
-      case 'capture-buy':
-        this.setState({ mode: 'pending-capture-sell' });
-        return;
-      case 'pending-capture-sell':
-        this.setState({ mode: 'capture-sell' });
-        return;
-      case 'capture-sell':
-        this.setState({ mode: 'train' });
-        this.model.train(console.log)
-          .then(() => {
-            this.setState({ mode: 'predict' });
-          });
-        return;
-      default:
-      // do nowt
-    }
-  }
-
-  componentDidMount() {
-    setInterval(() => this.next(), 5000);
-  }
-
-
   handleOnFrame = async (canvas) => {
     switch (this.state.mode) {
-      case 'capture-buy': {
-        this.model.sample(BUY, canvas);
-        break;
-      }
-      case 'capture-sell': {
-        this.model.sample(SELL, canvas);
-        break;
-      }
-      case 'pending-capture-buy':
-      case 'pending-capture-sell':
-      case 'predict': {
-        const predictions = await this.model.predict(canvas);
+      case WAITING_FOR_FRAME: {
         this.setState({
-          predictions
-        })
-        break;
+          mode: WAITING_FOR_MODEL
+        });
+        // kick off a dummy prediction to ensure the model is ready to go
+        await this.model.predict(canvas)
+        this.setState({
+          captureCount: 0,
+          mode: PENDING_CAPTURE_BUY
+        });
+        await sleep(2000);
+        this.setState({
+          mode: CAPTURING_BUY
+        });
+        return;
+      }
+      case CAPTURING_BUY: {
+        if (this.state.captureCount > 100) {
+          this.setState({
+            captureCount: 0,
+            mode: PENDING_CAPTURE_SELL
+          });
+          await sleep(2000);
+          this.setState({
+            mode: CAPTURING_SELL
+          });
+          return;
+        }
+        this.model.sample(BUY, canvas);
+        this.setState({
+          captureCount: this.state.captureCount + 1
+        });
+        return;
+      }
+      case CAPTURING_SELL: {
+        if (this.state.captureCount > 100) {
+          this.setState({
+            captureCount: null,
+            mode: TRAINING
+          });
+          await this.model.train(console.log);
+          this.setState({
+            mode: PREDICTING
+          });
+          return;
+        }
+        this.model.sample(SELL, canvas);
+        this.setState({
+          captureCount: this.state.captureCount + 1
+        });
+        return;
+      }
+      case PREDICTING: {
+        const predictions = await this.model.predict(canvas);
+        const buyProbability = predictions.find(({ className }) => className === BUY).probability;
+        const sellProbability = predictions.find(({ className }) => className === SELL).probability;
+        this.setState({
+          buyProbability,
+          sellProbability
+        });
+        return;
+      }
+      default: {
+        // sit pretty :)
       }
     }
   }
 
   render() {
-    const { predictions, mode } = this.state;
-    const buyProbability = predictions && predictions.find(({ className }) => className === BUY).probability;
-    const sellProbability = predictions && predictions.find(({ className }) => className === SELL).probability;
+    const { buyProbability, sellProbability, mode } = this.state;
     const side = buyProbability > sellProbability ? BUY : SELL;
-    // console.log(predictions, buyProbability, sellProbability);
     return (
       <div className="App">
         {mode}
