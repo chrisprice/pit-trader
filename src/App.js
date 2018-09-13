@@ -18,7 +18,9 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      mode: WAITING_FOR_FRAME
+      mode: WAITING_FOR_FRAME,
+      buyProbability: null,
+      sellProbability: null
     };
 
     load('indexeddb://model')
@@ -101,11 +103,15 @@ class App extends Component {
     const { buyProbability, sellProbability, mode } = this.state;
     const side = buyProbability > sellProbability ? BUY : SELL;
     return (
-      <div className="App">
-        {mode}
-        <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} />
-        {side}
-        <button onClick={() => this.model.save('indexeddb://model')} />
+      <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
+        <h1>{mode}</h1>
+        <div>
+          <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} showCanvas={true} />
+        </div>
+        <h1>{side}</h1>
+        <p>Buy: {buyProbability != null && buyProbability.toFixed(2)}</p>
+        <p>Sell: {sellProbability != null && sellProbability.toFixed(2)}</p>
+        <button onClick={() => this.model.save('indexeddb://model')} >Save Model</button>
       </div>
     );
   }

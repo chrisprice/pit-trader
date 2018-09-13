@@ -11,7 +11,7 @@ const NUM_CLASSES = CLASS_NAMES.length;
 const BATCH_SIZE = 20;
 const DENSE_UNITS = 100;
 const EPOCHS = 10;
-const LEARNING_RATE = 0.001;
+const LEARNING_RATE = 0.0001;
 
 const classifier = (model) => {
     model.compile({

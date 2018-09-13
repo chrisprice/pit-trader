@@ -33,12 +33,10 @@ export default class extends React.Component {
             const x = -0.5 * ((scale * videoWidth) - canvasSize);
             const y = -0.5 * ((scale * videoHeight) - canvasSize);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasSize;
-            canvas.height = canvasSize;
-            this.canvas = canvas;
+            this.canvas.width = canvasSize;
+            this.canvas.height = canvasSize;
 
-            this.ctx = canvas.getContext('2d');
+            this.ctx = this.canvas.getContext('2d');
             this.ctx.translate(canvasSize - x, y);
             this.ctx.scale(-scale, scale);
         }
@@ -49,7 +47,42 @@ export default class extends React.Component {
 
     render() {
         return (
-            <ReactWebcam ref={webcam => this.webcam = webcam} screenshotWidth={this.props.screenshotWidth} />
+            <div
+                style={{
+                    width: '100%',
+                    paddingBottom: '100%',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
+                    }}>
+                    <canvas
+                        ref={canvas => this.canvas = canvas}
+                        style={{
+                            position: 'absolute',
+                            height: '100%',
+                            width: '100%'
+                        }}
+                    />
+                    <ReactWebcam
+                        ref={webcam => this.webcam = webcam}
+                        screenshotWidth={this.props.screenshotWidth}
+                        style={{
+                            objectFit: 'cover',
+                            transform: 'rotateY(180deg)',
+                            height: '100%',
+                            width: '100%',
+                            visibility: this.props.showCanvas ? 'hidden' : 'visible'
+                        }}
+                    />
+                </div>
+            </div>
         );
     }
 }
