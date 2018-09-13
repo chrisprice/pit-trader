@@ -74,7 +74,7 @@ const classifier = (model) => {
     };
 };
 
-export const create = async () => {
+export const create = () => {
     const model = tf.sequential({
         layers: [
             tf.layers.flatten({

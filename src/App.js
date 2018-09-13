@@ -22,11 +22,7 @@ class App extends Component {
       buyProbability: null,
       sellProbability: null
     };
-
-    load('indexeddb://model')
-      .catch(() => create())
-      .then(model => this.model = model);
-    global.component = this;
+    this.model = create();
   }
 
   handleOnFrame = async (canvas) => {
@@ -109,9 +105,29 @@ class App extends Component {
           <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} showCanvas={true} />
         </div>
         <h1>{side}</h1>
-        <p>Buy: {buyProbability != null && buyProbability.toFixed(2)}</p>
-        <p>Sell: {sellProbability != null && sellProbability.toFixed(2)}</p>
-        <button onClick={() => this.model.save('indexeddb://model')} >Save Model</button>
+        <div style={{
+          height: '1em',
+          position: 'relative',
+          background: 'navy',
+        }}>
+          <div style={{
+            position: 'absolute',
+            background: 'coral',
+            top: 0,
+            right: (buyProbability * 100).toFixed(0) + '%',
+            bottom: 0,
+            left: 0
+          }}>
+          </div>
+        </div>
+        <p>
+          <button onClick={() => this.model.save('indexeddb://model')} >Save Model</button>
+          <button onClick={async () => {
+            this.setState({ mode: WAITING_FOR_MODEL });
+            this.model = await load('indexeddb://model');
+            this.setState({ mode: PREDICTING });
+          }}>Load Model</button>
+        </p>
       </div>
     );
   }
