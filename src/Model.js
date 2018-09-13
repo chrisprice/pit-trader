@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { BUY, SELL, create, load } from './tensorflow/classifier';
 import Webcam from './Webcam';
+import { sleep } from './util';
 
 const WAITING_FOR_FRAME = 'waiting-for-frame';
 const WAITING_FOR_MODEL = 'waiting-for-model';
@@ -10,8 +11,6 @@ const PENDING_CAPTURE_SELL = 'pending-capture-sell'
 const CAPTURING_SELL = 'capturing-sell'
 const TRAINING = 'training';
 const CLASSIFYING = 'classifying';
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 class App extends Component {
 
