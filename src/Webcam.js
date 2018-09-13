@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactWebcam from 'react-webcam'
 
-export default class extends React.Component {
+class Webcam extends React.Component {
 
     componentDidMount() {
         this.scheduleAnimationFrame();
@@ -52,7 +52,8 @@ export default class extends React.Component {
                     width: '100%',
                     paddingBottom: '100%',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    ...this.props.style
                 }}>
                 <div
                     style={{
@@ -86,3 +87,10 @@ export default class extends React.Component {
         );
     }
 }
+
+Webcam.defaultProps = {
+    onFrame: () => {},
+    style: {}
+};
+
+export default Webcam;

@@ -19,7 +19,7 @@ export const partial = async (image) => {
 
 export const getPartialShape = () => [7, 7, 256];
 
-export const predict = async (image) => {
+export const classify = async (image, topk) => {
     const model = await loadModel();
-    return await model.predict(image);
+    return await model.classify(image, topk);
 };

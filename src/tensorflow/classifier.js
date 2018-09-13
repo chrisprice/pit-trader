@@ -50,7 +50,7 @@ const classifier = (model) => {
             });
         });
 
-    const predict = async (image) => {
+    const classify = async (image) => {
         const activations = await partial(image);
         const predictions = await model.predict(activations);
         activations.dispose();
@@ -69,7 +69,7 @@ const classifier = (model) => {
     return {
         sample,
         train,
-        predict,
+        classify,
         save
     };
 };
