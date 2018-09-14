@@ -31,7 +31,7 @@ class App extends Component {
           mode: WAITING_FOR_MODEL
         });
         // kick off a dummy prediction to ensure the model is ready to go
-        await this.model.predict(canvas)
+        await this.model.classify(canvas)
         this.setState({
           captureCount: 0,
           mode: PENDING_CAPTURE_BUY
