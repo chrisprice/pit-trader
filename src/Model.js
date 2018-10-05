@@ -43,7 +43,7 @@ class App extends Component {
         return;
       }
       case CAPTURING_BUY: {
-        if (this.state.captureCount > 100) {
+        if (this.state.captureCount > 200) {
           this.setState({
             captureCount: 0,
             mode: PENDING_CAPTURE_SELL
@@ -61,7 +61,7 @@ class App extends Component {
         return;
       }
       case CAPTURING_SELL: {
-        if (this.state.captureCount > 100) {
+        if (this.state.captureCount > 200) {
           this.setState({
             captureCount: null,
             mode: TRAINING

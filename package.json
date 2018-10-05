@@ -12,7 +12,7 @@
     "react-dom": "^16.4.2",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.5",
+    "react-scripts": "^2.0.4",
     "react-webcam": "^1.0.1"
   },
   "scripts": {
@@ -22,5 +22,11 @@
     "eject": "react-scripts eject",
     "deploy": "gh-pages -d build"
   },
-  "homepage": "https://chrisprice.io/pit-trader"
+  "homepage": "https://chrisprice.io/pit-trader",
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

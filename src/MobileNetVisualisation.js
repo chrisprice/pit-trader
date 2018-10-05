@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { classify } from './tensorflow/mobilenet';
+import lookupWordNetId from './tensorflow/wordNetIds';
 import Webcam from './Webcam';
 import * as d3 from 'd3';
 import * as d3fc from 'd3fc';
@@ -7,9 +8,9 @@ import { sleep } from './util';
 
 const SYMBOL_SIZE_SCALE = 5;
 const SYMBOL_SIZE_MIN = 5;
-const MOVING_AVERAGE_COUNT = 30;
-const LABEL_FONT_SIZE = 16;
-const LABEL_VERTICAL_OFFSET = 0.3 * LABEL_FONT_SIZE;
+const MOVING_AVERAGE_COUNT = 5;
+const LABEL_FONT_SIZE = 24;
+const LABEL_VERTICAL_OFFSET = 0.5 * LABEL_FONT_SIZE;
 
 const sum = array => array.reduce((a, b) => a + b, 0);
 
@@ -42,7 +43,11 @@ class MobileNetVisualisation extends Component {
   componentDidMount() {
     const surface = d3.select(this.surface)
       .on('draw', () => {
-        const { width, height } = d3.event.detail;
+        if (this.sortedKeys == null) {
+          return;
+        }
+
+        const { width, height, pixelRatio } = d3.event.detail;
 
         const surfaceSize = Math.min(width, height);
         const cellCount = this.predictions.size;
@@ -58,7 +63,7 @@ class MobileNetVisualisation extends Component {
         this.symbolGenerator.size(d => d * symbolScale * SYMBOL_SIZE_SCALE + SYMBOL_SIZE_MIN)
           .context(ctx);
 
-        const colorScale = d3.scaleSequential(d3.interpolateWarm)
+        const colorScale = d3.scaleSequential(d3.interpolateSinebow)
           .domain([0, cellCount]);
 
         ctx.strokeStyle = 'white';
@@ -75,7 +80,7 @@ class MobileNetVisualisation extends Component {
           ctx.fill();
         });
 
-        ctx.font = `${LABEL_FONT_SIZE}px sans-serif`;
+        ctx.font = `${LABEL_FONT_SIZE * pixelRatio}px sans-serif`;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = 'black';
         ctx.strokeStyle = 'gray';
@@ -90,7 +95,7 @@ class MobileNetVisualisation extends Component {
 
         const locations = this.sortedKeys.map(
           (key, index) => {
-            const { label, ranks } = this.predictions.get(key);
+            const { label, wordNetId, ranks } = this.predictions.get(key);
             if (movingAverage(ranks) >= 5) {
               return;
             }
@@ -109,6 +114,7 @@ class MobileNetVisualisation extends Component {
                 type: 'label',
                 label,
                 labelWidth,
+                wordNetId,
                 circle,
                 x: (index % cellsPerColumn) * cellSize + offset,
                 y: Math.floor(index / cellsPerColumn) * cellSize + offset,
@@ -155,6 +161,7 @@ class MobileNetVisualisation extends Component {
       if (item == null) {
         item = {
           label: className.split(',')[0],
+          wordNetId: lookupWordNetId(className),
           probabilities: new Array(MOVING_AVERAGE_COUNT).fill(0),
           ranks: new Array(MOVING_AVERAGE_COUNT).fill(1000),
         };
@@ -166,8 +173,7 @@ class MobileNetVisualisation extends Component {
 
     if (this.sortedKeys == null) {
       // TODO set domain x/y co-ords here
-      this.sortedKeys = Array.from(this.predictions.keys())
-        .sort((a, b) => a.localeCompare(b));
+      this.sortedKeys = d3.shuffle(Array.from(this.predictions.keys()));
     }
 
     this.surface.requestRedraw();
@@ -182,6 +188,7 @@ class MobileNetVisualisation extends Component {
             onFrame={frame => this.frame = this.handleFrame(frame)} />
         </div>
         <d3fc-canvas
+          use-device-pixel-ratio
           style={{ width: '100%', height: '100%' }}
           ref={surface => this.surface = surface}></d3fc-canvas>
       </React.Fragment >
