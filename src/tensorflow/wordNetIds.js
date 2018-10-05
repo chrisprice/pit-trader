@@ -1,6 +1,6 @@
 import { IMAGENET_CLASSES } from '@tensorflow-models/mobilenet/dist/imagenet_classes';
 
-const ids = [
+export const wordNetIds = [
     'n01440764',
     'n01443537',
     'n01484850',
@@ -1003,9 +1003,11 @@ const ids = [
     'n15075141'
 ];
 
-const lookup = {};
+const byClassName = {};
+const byId = {};
 for (const index of Object.keys(IMAGENET_CLASSES)) {
-    lookup[IMAGENET_CLASSES[index]] = ids[index];
+    byClassName[IMAGENET_CLASSES[index]] = wordNetIds[index];
+    byId[wordNetIds[index]] = IMAGENET_CLASSES[index];
 }
 
-export default (className) => lookup[className];
+export default (value) => value.match(/n\d{8}/) ? byId[value] : byClassName[value];

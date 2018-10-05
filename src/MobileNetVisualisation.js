@@ -1,16 +1,21 @@
 import React, { Component } from 'react';
 import { classify } from './tensorflow/mobilenet';
-import lookupWordNetId from './tensorflow/wordNetIds';
+import lookupWordNetId, { wordNetIds } from './tensorflow/wordNetIds';
 import Webcam from './Webcam';
 import * as d3 from 'd3';
 import * as d3fc from 'd3fc';
 import { sleep } from './util';
+import createTextMetricsCache from './util/textMetricsCache';
+import createLazyMap from './util/lazyMap';
+import getLabelAnchor from './util/labelAnchor';
 
-const SYMBOL_SIZE_SCALE = 5;
-const SYMBOL_SIZE_MIN = 5;
+const SYMBOL_SIZE_SCALE = 100;
+const SYMBOL_SIZE_MIN = 0.001;
 const MOVING_AVERAGE_COUNT = 5;
 const LABEL_FONT_SIZE = 24;
-const LABEL_VERTICAL_OFFSET = 0.5 * LABEL_FONT_SIZE;
+const LABEL_VERTICAL_OFFSET = 0.75;
+const LABEL_MARGIN = LABEL_FONT_SIZE * 2;
+const ANCHOR_MARGIN = LABEL_FONT_SIZE * 0.9;
 
 const sum = array => array.reduce((a, b) => a + b, 0);
 
@@ -35,146 +40,247 @@ class MobileNetVisualisation extends Component {
 
   constructor() {
     super();
-    this.symbolGenerator = d3.symbol();
-    this.predictions = new Map();
-    this.sortedKeys = null;
+    this.predictions = createLazyMap(() => ({
+      probabilities: new Array(MOVING_AVERAGE_COUNT).fill(0),
+      ranks: new Array(MOVING_AVERAGE_COUNT).fill(1000),
+    }));
+    this.renderedLabelIds = [];
+    this.textMetricsCache = null;
+  }
+
+  initialiseNodes(width, height) {
+    const cellsPerColumn = Math.floor(Math.sqrt(wordNetIds.length));
+    const cellWidth = width / cellsPerColumn;
+    const cellHeight = height / cellsPerColumn;
+    const offsetLeft = cellWidth / 2;
+    const offsetTop = cellHeight / 2;
+
+    this.nodes = d3.shuffle(wordNetIds.slice())
+      .map((wordNetId, index) => {
+        const className = lookupWordNetId(wordNetId);
+        const top = (index % cellsPerColumn) * cellHeight;
+        const left = Math.floor(index / cellsPerColumn) * cellWidth;
+        return {
+          index,
+          wordNetId,
+          className,
+          shortName: className.split(',')[0],
+          top,
+          left,
+          center: [left + offsetLeft, top + offsetTop],
+          width: cellWidth,
+          height: cellHeight,
+          probability: () => movingAverage(this.predictions(wordNetId).probabilities),
+          rank: () => movingAverage(this.predictions(wordNetId).ranks)
+        };
+      });
+
+    this.nodes = d3.shuffle(this.nodes);
   }
 
   componentDidMount() {
+    setInterval(() => this.handleTimer(), 100);
+
     const surface = d3.select(this.surface)
       .on('draw', () => {
-        if (this.sortedKeys == null) {
-          return;
-        }
-
         const { width, height, pixelRatio } = d3.event.detail;
-
-        const surfaceSize = Math.min(width, height);
-        const cellCount = this.predictions.size;
-        const cellsPerColumn = Math.ceil(Math.sqrt(cellCount));
-        const cellSize = surfaceSize / cellsPerColumn;
-        const offset = cellSize / 2;
-        const symbolScale = Math.PI * offset * offset;
 
         const ctx = surface.select('canvas')
           .node()
           .getContext('2d');
 
-        this.symbolGenerator.size(d => d * symbolScale * SYMBOL_SIZE_SCALE + SYMBOL_SIZE_MIN)
+        if (this.nodes == null) {
+          this.initialiseNodes(width, height);
+        }
+
+        ctx.font = `${LABEL_FONT_SIZE * pixelRatio}px sans-serif`;
+
+        if (this.textMetricsCache == null) {
+          this.textMetricsCache = createTextMetricsCache(ctx);
+        }
+
+        const symbolGenerator = d3.symbol()
+          .size(d => d)
           .context(ctx);
 
         const colorScale = d3.scaleSequential(d3.interpolateSinebow)
-          .domain([0, cellCount]);
+          .domain([0, this.nodes.length]);
 
+        const circles = this.nodes.map(node => {
+          const length = Math.min(node.width, node.height);
+          const area = length * length;
+          const scale = area * SYMBOL_SIZE_SCALE;
+          const size = (node.probability() + SYMBOL_SIZE_MIN) * scale;
+          return {
+            node,
+            id: node.index,
+            x: node.center[0],
+            y: node.center[1],
+            size
+          };
+        })
+          .sort((a, b) => a.size - b.size);
+
+        ctx.globalAlpha = 0.6;
         ctx.strokeStyle = 'white';
 
-        this.sortedKeys.forEach((key, index) => {
-          const { probabilities } = this.predictions.get(key);
-          const x = (index % cellsPerColumn) * cellSize + offset;
-          const y = Math.floor(index / cellsPerColumn) * cellSize + offset;
+        for (const { id, x, y, size } of circles) {
           ctx.beginPath();
           ctx.setTransform(1, 0, 0, 1, x, y);
-          ctx.fillStyle = colorScale(index);
-          this.symbolGenerator(movingAverage(probabilities));
+          ctx.fillStyle = colorScale(id);
+          symbolGenerator(size);
           ctx.stroke();
           ctx.fill();
-        });
+        }
 
-        ctx.font = `${LABEL_FONT_SIZE * pixelRatio}px sans-serif`;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'gray';
+        const labels = this.nodes.filter(({ wordNetId, rank }) =>
+          rank() <= (this.renderedLabelIds.includes(wordNetId) ? 20 : 5)
+        )
+          .map(({ wordNetId, shortName, center, rank }) => {
+            let index = this.renderedLabelIds.indexOf(wordNetId);
+            if (index === -1) {
+              index = this.renderedLabelIds.length + rank();
+            }
+            const text = shortName;
+            const textWidth = this.textMetricsCache(text).width;
+            const textHeight = LABEL_FONT_SIZE * pixelRatio;
+            return {
+              id: wordNetId,
+              index,
+              text,
+              textWidth,
+              textHeight,
+              width: textWidth + LABEL_MARGIN,
+              height: textHeight + LABEL_MARGIN,
+              x: center[0],
+              y: center[1]
+            };
+          })
+          .sort((a, b) => a.index - b.index);
+
+        this.renderedLabelIds = labels.map(({ id }) => id);
 
         const labelLayoutStrategy = d3fc.layoutGreedy()
           .bounds({
-            x: offset,
-            y: offset,
-            width: surfaceSize - 2 * offset,
-            height: surfaceSize - 2 * offset
+            x: 0, 
+            y: 0,
+            width,
+            height
           });
 
-        const locations = this.sortedKeys.map(
-          (key, index) => {
-            const { label, wordNetId, ranks } = this.predictions.get(key);
-            if (movingAverage(ranks) >= 5) {
-              return;
-            }
-            const labelWidth = ctx.measureText(label).width;
-            const circle = {
-              type: 'circle',
-              x: (index % cellsPerColumn) * cellSize,
-              y: Math.floor(index / cellsPerColumn) * cellSize,
-              width: cellSize,
-              height: cellSize,
-              hidden: false
-            };
-            return [
-              circle,
-              {
-                type: 'label',
-                label,
-                labelWidth,
-                wordNetId,
-                circle,
-                x: (index % cellsPerColumn) * cellSize + offset,
-                y: Math.floor(index / cellsPerColumn) * cellSize + offset,
-                width: 2 * labelWidth,
-                height: 2 * labelWidth,
-                hidden: false
-              }
-            ];
-          })
-          .filter(x => x != null)
-          .reduce((array, [circle, label]) => [circle, ...array, label], []);
+        const labelLocations = labelLayoutStrategy(labels.map(({ x, y, width, height }) => ({
+          x,
+          y,
+          width,
+          height,
+          hidden: false
+        })))
 
-          labelLayoutStrategy(locations)
-          .filter(({ hidden }) => !hidden)
-          .forEach(({ x, y}, index) => {
-            const location = locations[index];
-            if (location.type !== 'label') {
-              return;
-            }
-            ctx.fillText(
-              location.label, 
-              x + location.labelWidth / 2, 
-              y + location.labelWidth + LABEL_VERTICAL_OFFSET
-            );
-            ctx.beginPath()
-            ctx.moveTo(
-              location.circle.x + location.circle.width / 2, 
-              location.circle.y + location.circle.height / 2
-            );
-            ctx.lineTo(
-              x + location.width / 2 + compare(location.circle.x + location.circle.width / 2, x + location.width / 2) * 1.1 * (location.labelWidth / 2), 
-              y + location.height / 2 + compare(location.circle.y + location.circle.height / 2, y + location.height / 2) * 1.5 * (LABEL_VERTICAL_OFFSET), 
-            );
-            ctx.stroke();
-          })
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'gray';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 2 * devicePixelRatio;
+
+        for (let i = 0; i < labels.length; i++) {
+          const { text, textWidth, textHeight } = labels[i];
+          const { x, y, width, height, location } = labelLocations[i];
+          ctx.setTransform(1, 0, 0, 1, x, y);
+          ctx.fillText(text, (width - textWidth) / 2, (height - textHeight) / 2 + LABEL_VERTICAL_OFFSET * textHeight);
+          const labelAnchor = getLabelAnchor({
+            width,
+            height,
+            location,
+            margin: ANCHOR_MARGIN
+          });
+          ctx.beginPath();
+          ctx.moveTo(labelAnchor.x1, labelAnchor.y1);
+          ctx.lineTo(labelAnchor.x2, labelAnchor.y2);
+          ctx.stroke();
+        }
+
+
+
+        // const locations = this.sortedKeys.map(
+        //   (key, index) => {
+        //     const { label, wordNetId, ranks, probabilities } = this.predictions.get(key);
+        //     const labelWidth = this.textMetricsCache(label).width;
+        //     const rank = movingAverage(ranks);
+        //     const circle = {
+        //       type: 'circle',
+        //       x: (index % cellsPerColumn) * cellSize + offset,
+        //       y: Math.floor(index / cellsPerColumn) * cellSize + offset,
+        //       width: cellSize,
+        //       height: cellSize,
+        //       rank,
+        //       probability: movingAverage(probabilities),
+        //       hidden: false,
+        //     };
+        //     return [
+        //       circle,
+        //       {
+        //         type: 'label',
+        //         label,
+        //         labelWidth,
+        //         wordNetId,
+        //         rank,
+        //         circle,
+        //         x: circle.x,
+        //         y: circle.y,
+        //         width: 2 * labelWidth,
+        //         height: 2 * labelWidth,
+        //         hidden: false,
+        //       }
+        //     ];
+        //   })
+        //   .filter(x => x != null)
+        //   .reduce((a, b) => a.concat(b), [])
+        //   .sort((a, b) => a.rank - b.rank);
+
+
+        // ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // ctx.fillStyle = 'black';
+        // ctx.strokeStyle = 'gray';
+
+        // const labelLocations = locations.filter(({ type, rank }) => type === 'label' && rank <= 5);
+
+        // labelLayoutStrategy(labelLocations)
+        //   .forEach(({ x, y, ...other }, index) => {
+        //     console.log(other);
+        //     const location = labelLocations[index];
+        //     if (location.type !== 'label') {
+        //       return;
+        //     }
+        //     ctx.fillText(
+        //       location.label,
+        //       x + location.labelWidth / 2,
+        //       y + location.labelWidth + LABEL_VERTICAL_OFFSET
+        //     );
+        //     ctx.beginPath()
+        //     ctx.moveTo(
+        //       location.circle.x,
+        //       location.circle.y
+        //     );
+        //     ctx.lineTo(
+        //       x + location.width / 2 + compare(location.circle.x, x + location.width / 2) * 1.1 * (location.labelWidth / 2),
+        //       y + location.height / 2 + compare(location.circle.y, y + location.height / 2) * 1.5 * (LABEL_VERTICAL_OFFSET),
+        //     );
+        //     ctx.stroke();
+        //   });
       });
   }
 
-  async handleFrame(frame) {
-    const predictions = await classify(frame, 1000);
-
+  async handleTimer() {
+    if (this.frame == null) {
+      return;
+    }
+    const predictions = await classify(this.frame, 1000);
     predictions.forEach(({ className, probability }, index) => {
-      let item = this.predictions.get(className);
-      if (item == null) {
-        item = {
-          label: className.split(',')[0],
-          wordNetId: lookupWordNetId(className),
-          probabilities: new Array(MOVING_AVERAGE_COUNT).fill(0),
-          ranks: new Array(MOVING_AVERAGE_COUNT).fill(1000),
-        };
-        this.predictions.set(className, item);
-      }
+      const wordNetId = lookupWordNetId(className);
+      const item = this.predictions(wordNetId);
       rollLeft(item.ranks, index);
       rollLeft(item.probabilities, probability);
     });
-
-    if (this.sortedKeys == null) {
-      // TODO set domain x/y co-ords here
-      this.sortedKeys = d3.shuffle(Array.from(this.predictions.keys()));
-    }
 
     this.surface.requestRedraw();
   }
@@ -183,13 +289,14 @@ class MobileNetVisualisation extends Component {
     return (
       <React.Fragment>
         <div
-          style={{ position: 'absolute', bottom: '1vw', right: '1vw', width: '20vw', height: '20vw' }} >
+          style={{ position: 'absolute', width: '100vw', height: '100vh', overflow: 'hidden' }} >
           <Webcam
-            onFrame={frame => this.frame = this.handleFrame(frame)} />
+            onFrame={frame => this.frame = frame} 
+            style={{ opacity: 0.5 }} />
         </div>
         <d3fc-canvas
           use-device-pixel-ratio
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100vw', height: '100vh' }}
           ref={surface => this.surface = surface}></d3fc-canvas>
       </React.Fragment >
     );
