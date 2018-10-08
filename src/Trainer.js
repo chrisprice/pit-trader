@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import { BUY, SELL, create, load } from './tensorflow/classifier';
-import Webcam from './Webcam';
+import { BUY, SELL } from './tensorflow/classifier';
 import HandsPalmForward from './hands/HandsPalmFacing';
 import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
+import Layout from './Layout';
 
 const WAITING_FOR_FRAME = 'waiting-for-frame';
 const WAITING_FOR_MODEL = 'waiting-for-model';
@@ -32,7 +32,7 @@ const labelFor = (mode) => {
   }
 }
 
-class App extends Component {
+class Trainer extends Component {
 
   constructor() {
     super();
@@ -41,17 +41,16 @@ class App extends Component {
       buyProbability: null,
       sellProbability: null
     };
-    this.model = create();
   }
 
-  handleOnFrame = async (canvas) => {
+  handleFrame = async (canvas) => {
     switch (this.state.mode) {
       case WAITING_FOR_FRAME: {
         this.setState({
           mode: WAITING_FOR_MODEL
         });
         // kick off a dummy prediction to ensure the model is ready to go
-        await this.model.classify(canvas)
+        await this.props.model.classify(canvas);
         this.setState({
           captureCount: 0,
           mode: PENDING_CAPTURE_BUY
@@ -74,7 +73,7 @@ class App extends Component {
           });
           return;
         }
-        this.model.sample(BUY, canvas);
+        this.props.model.sample(BUY, canvas);
         this.setState({
           captureCount: this.state.captureCount + 1
         });
@@ -86,20 +85,20 @@ class App extends Component {
             captureCount: null,
             mode: TRAINING
           });
-          await this.model.train(console.log);
+          await this.props.model.train(console.log);
           this.setState({
             mode: CLASSIFYING
           });
           return;
         }
-        this.model.sample(SELL, canvas);
+        this.props.model.sample(SELL, canvas);
         this.setState({
           captureCount: this.state.captureCount + 1
         });
         return;
       }
       case CLASSIFYING: {
-        const predictions = await this.model.classify(canvas);
+        const predictions = await this.props.model.classify(canvas);
         const buyProbability = predictions.find(({ className }) => className === BUY).probability;
         const sellProbability = predictions.find(({ className }) => className === SELL).probability;
         this.setState({
@@ -118,48 +117,27 @@ class App extends Component {
     const { buyProbability, sellProbability, mode } = this.state;
     const side = buyProbability > sellProbability ? BUY : SELL;
     return (
-
-      <React.Fragment>
-        <div
-          style={{ position: 'absolute', width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }} >
-          <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} />
-        </div>
+      <Layout title={
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          width: '100vw',
-          height: '100vh',
-          opacity: 0.8
+          textAlign: 'center',
+          fontSize: '8vh',
+          flex: 1,
+          padding: '2vh 0'
         }}>
-          <div style={{
-            background: 'white',
-            margin: '2vh 0',
-            display: 'flex',
-            alignItems: 'center',
-            fontFamily: 'monospaced'
-          }}>
-            <div style={{
-              textAlign: 'center',
-              fontSize: '8vh',
-              flex: 1,
-              padding: '2vh 0'
-            }}>
-              {mode !== 'classifying' ? labelFor(mode) : side}
-            </div>
-          </div>
-          {
-            (mode === PENDING_CAPTURE_BUY || mode === CAPTURING_BUY) &&
-            <HandsPalmBackward />
-          }
-          {
-            (mode === PENDING_CAPTURE_SELL || mode === CAPTURING_SELL) &&
-            <HandsPalmForward />
-          }
+          {mode !== 'classifying' ? labelFor(mode) : side}
         </div>
-      </React.Fragment >
+      }>
+        {
+          (mode === PENDING_CAPTURE_BUY || mode === CAPTURING_BUY) &&
+          <HandsPalmBackward />
+        }
+        {
+          (mode === PENDING_CAPTURE_SELL || mode === CAPTURING_SELL) &&
+          <HandsPalmForward />
+        }
+      </Layout>
     );
   }
 }
 
-export default App;
+export default Trainer;

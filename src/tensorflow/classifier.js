@@ -40,7 +40,6 @@ const classifier = (model) => {
                 epochs: EPOCHS,
                 callbacks: {
                     onEpochEnd: async (index, foo) => {
-                        console.log(foo);
                         if (progressCallback != null) {
                             progressCallback((index + 1) / EPOCHS);
                         }

@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
-import Webcam from './Webcam';
 import * as d3 from 'd3';
 import * as d3fc from 'd3fc';
-import { sleep } from './util';
+import Layout from './Layout';
+import { BUY, SELL } from './tensorflow/classifier';
 
 const CANVAS_MARGIN = 100;
 
-class Game extends Component {
+const currencyFormatter = new Intl.NumberFormat('en-us', { style: 'currency', currency: 'USD' });
+
+export default class Game extends Component {
 
   constructor() {
     super();
@@ -52,8 +54,8 @@ class Game extends Component {
         xScale.range([0, width - CANVAS_MARGIN * pixelRatio]);
         yScale.range([height - CANVAS_MARGIN * pixelRatio, CANVAS_MARGIN * pixelRatio]);
 
-        const { data, position } = this.props;
-        const { index } = this.state;
+        const { data } = this.props;
+        const { index, position } = this.state;
 
         const ctx = surface.select('canvas')
           .node()
@@ -114,8 +116,8 @@ class Game extends Component {
   }
 
   tick() {
-    const { data, position, onCashUpdate, onComplete } = this.props;
-    const { cash, index } = this.state;
+    const { data, onCashUpdate, onComplete } = this.props;
+    const { cash, position, index } = this.state;
     if (index >= data.length) {
       return;
     }
@@ -135,33 +137,20 @@ class Game extends Component {
       clearInterval(this.timer);
     }
   }
+  
+  handleFrame = async (canvas) => {
+    const predictions = await this.props.model.classify(canvas);
+    const position = predictions.find(({ className }) => className === BUY).probability * 2 - 1;
+    this.setState({
+      position
+    });
+  }
 
   render() {
-    if (this.surface != null) {
-      this.surface.requestRedraw();
-    }
-    const datum = this.props.data[this.state.index];
-    const currencyFormatter = new Intl.NumberFormat('en-us', { style: 'currency', currency: 'USD' })
     return (
-      <React.Fragment>
-        <div
-          style={{ position: 'absolute', width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }} >
-          <Webcam onFrame={frame => this.frame = frame} />
-        </div>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100vw', 
-          height: '100vh', 
-          opacity: 0.8
-        }}>
-          <div style={{
-            background: 'white',
-            margin: '2vh 0',
-            display: 'flex',
-            alignItems: 'center',
-            fontFamily: 'monospaced'
-          }}>
+      <Layout
+        title={
+          <React.Fragment>
             <div style={{
               textAlign: 'right',
               fontSize: '8vh',
@@ -179,24 +168,14 @@ class Game extends Component {
             }}>
               {this.state.delta != null && currencyFormatter.format(this.state.delta)}
             </div>
-          </div>
-          <d3fc-canvas
-            use-device-pixel-ratio
-            style={{ flex: 'auto', opacity: 0.8 }}
-            ref={surface => this.surface = surface}></d3fc-canvas>
-        </div>
-      </React.Fragment >
+          </React.Fragment>
+        }>
+        <d3fc-canvas
+          use-device-pixel-ratio
+          style={{ flex: 'auto', opacity: 0.8 }}
+          ref={surface => this.surface = surface}></d3fc-canvas>
+      </Layout>
     );
   }
 }
 
-export default () => {
-  const generator = d3fc.randomFinancial()
-    .startPrice(100)
-    .mu(0.1)
-    .sigma(1.5);
-
-  const data = generator(100);
-
-  return <Game cash={1e6} data={data} position={1} interval={333} onCashUpdate={() => { }} onComplete={() => {}}/>;
-};
