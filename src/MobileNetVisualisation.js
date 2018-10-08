@@ -129,7 +129,6 @@ class MobileNetVisualisation extends Component {
           ctx.setTransform(1, 0, 0, 1, x, y);
           ctx.fillStyle = colorScale(id);
           symbolGenerator(size);
-          ctx.stroke();
           ctx.fill();
         }
 
@@ -198,75 +197,6 @@ class MobileNetVisualisation extends Component {
           ctx.lineTo(labelAnchor.x2, labelAnchor.y2);
           ctx.stroke();
         }
-
-
-
-        // const locations = this.sortedKeys.map(
-        //   (key, index) => {
-        //     const { label, wordNetId, ranks, probabilities } = this.predictions.get(key);
-        //     const labelWidth = this.textMetricsCache(label).width;
-        //     const rank = movingAverage(ranks);
-        //     const circle = {
-        //       type: 'circle',
-        //       x: (index % cellsPerColumn) * cellSize + offset,
-        //       y: Math.floor(index / cellsPerColumn) * cellSize + offset,
-        //       width: cellSize,
-        //       height: cellSize,
-        //       rank,
-        //       probability: movingAverage(probabilities),
-        //       hidden: false,
-        //     };
-        //     return [
-        //       circle,
-        //       {
-        //         type: 'label',
-        //         label,
-        //         labelWidth,
-        //         wordNetId,
-        //         rank,
-        //         circle,
-        //         x: circle.x,
-        //         y: circle.y,
-        //         width: 2 * labelWidth,
-        //         height: 2 * labelWidth,
-        //         hidden: false,
-        //       }
-        //     ];
-        //   })
-        //   .filter(x => x != null)
-        //   .reduce((a, b) => a.concat(b), [])
-        //   .sort((a, b) => a.rank - b.rank);
-
-
-        // ctx.setTransform(1, 0, 0, 1, 0, 0);
-        // ctx.fillStyle = 'black';
-        // ctx.strokeStyle = 'gray';
-
-        // const labelLocations = locations.filter(({ type, rank }) => type === 'label' && rank <= 5);
-
-        // labelLayoutStrategy(labelLocations)
-        //   .forEach(({ x, y, ...other }, index) => {
-        //     console.log(other);
-        //     const location = labelLocations[index];
-        //     if (location.type !== 'label') {
-        //       return;
-        //     }
-        //     ctx.fillText(
-        //       location.label,
-        //       x + location.labelWidth / 2,
-        //       y + location.labelWidth + LABEL_VERTICAL_OFFSET
-        //     );
-        //     ctx.beginPath()
-        //     ctx.moveTo(
-        //       location.circle.x,
-        //       location.circle.y
-        //     );
-        //     ctx.lineTo(
-        //       x + location.width / 2 + compare(location.circle.x, x + location.width / 2) * 1.1 * (location.labelWidth / 2),
-        //       y + location.height / 2 + compare(location.circle.y, y + location.height / 2) * 1.5 * (LABEL_VERTICAL_OFFSET),
-        //     );
-        //     ctx.stroke();
-        //   });
       });
   }
 
