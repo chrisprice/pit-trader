@@ -5,6 +5,7 @@ import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
 import Layout from './Layout';
 
+const CAPTURE_COUNT = 200;
 const WAITING_FOR_FRAME = 'waiting-for-frame';
 const WAITING_FOR_MODEL = 'waiting-for-model';
 const PENDING_CAPTURE_BUY = 'pending-capture-buy'
@@ -14,7 +15,7 @@ const CAPTURING_SELL = 'capturing-sell'
 const TRAINING = 'training';
 const CLASSIFYING = 'classifying';
 
-const labelFor = (mode) => {
+const labelFor = ({ mode, captureCount }) => {
   switch (mode) {
     case WAITING_FOR_FRAME:
     case WAITING_FOR_MODEL:
@@ -22,11 +23,11 @@ const labelFor = (mode) => {
     case PENDING_CAPTURE_BUY:
       return 'Buy - Get Ready';
     case CAPTURING_BUY:
-      return 'Buy - Capturing...'
+      return `Buy - Capturing... (${captureCount}/${CAPTURE_COUNT})`
     case PENDING_CAPTURE_SELL:
       return 'Sell - Get Ready';
     case CAPTURING_SELL:
-      return 'Sell - Capturing...'
+      return `Sell - Capturing... (${captureCount}/${CAPTURE_COUNT})`
     case TRAINING:
       return 'Training...'
   }
@@ -124,7 +125,7 @@ class Trainer extends Component {
           flex: 1,
           padding: '2vh 0'
         }}>
-          {mode !== 'classifying' ? labelFor(mode) : side}
+          {mode !== 'classifying' ? labelFor(this.state) : side}
         </div>
       }>
         {
