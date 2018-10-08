@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { BUY, SELL, create, load } from './tensorflow/classifier';
 import Webcam from './Webcam';
+import HandsPalmForward from './hands/HandsPalmFacing';
+import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
 
 const WAITING_FOR_FRAME = 'waiting-for-frame';
@@ -11,6 +13,24 @@ const PENDING_CAPTURE_SELL = 'pending-capture-sell'
 const CAPTURING_SELL = 'capturing-sell'
 const TRAINING = 'training';
 const CLASSIFYING = 'classifying';
+
+const labelFor = (mode) => {
+  switch (mode) {
+    case WAITING_FOR_FRAME:
+    case WAITING_FOR_MODEL:
+      return 'Loading';
+    case PENDING_CAPTURE_BUY:
+      return 'Buy - Get Ready';
+    case CAPTURING_BUY:
+      return 'Buy - Capturing...'
+    case PENDING_CAPTURE_SELL:
+      return 'Sell - Get Ready';
+    case CAPTURING_SELL:
+      return 'Sell - Capturing...'
+    case TRAINING:
+      return 'Training...'
+  }
+}
 
 class App extends Component {
 
@@ -36,7 +56,7 @@ class App extends Component {
           captureCount: 0,
           mode: PENDING_CAPTURE_BUY
         });
-        await sleep(2000);
+        await sleep(5000);
         this.setState({
           mode: CAPTURING_BUY
         });
@@ -48,7 +68,7 @@ class App extends Component {
             captureCount: 0,
             mode: PENDING_CAPTURE_SELL
           });
-          await sleep(2000);
+          await sleep(5000);
           this.setState({
             mode: CAPTURING_SELL
           });
@@ -98,36 +118,46 @@ class App extends Component {
     const { buyProbability, sellProbability, mode } = this.state;
     const side = buyProbability > sellProbability ? BUY : SELL;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
-        <h1>{mode}</h1>
-        <div>
-          <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} showCanvas={true} />
+
+      <React.Fragment>
+        <div
+          style={{ position: 'absolute', width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }} >
+          <Webcam screenshotWidth={224} onFrame={this.handleOnFrame} />
         </div>
-        <h1>{side}</h1>
         <div style={{
-          height: '1em',
-          position: 'relative',
-          background: 'navy',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          width: '100vw',
+          height: '100vh',
+          opacity: 0.8
         }}>
           <div style={{
-            position: 'absolute',
-            background: 'coral',
-            top: 0,
-            right: (buyProbability * 100).toFixed(0) + '%',
-            bottom: 0,
-            left: 0
+            background: 'white',
+            margin: '2vh 0',
+            display: 'flex',
+            alignItems: 'center',
+            fontFamily: 'monospaced'
           }}>
+            <div style={{
+              textAlign: 'center',
+              fontSize: '8vh',
+              flex: 1,
+              padding: '2vh 0'
+            }}>
+              {mode !== 'classifying' ? labelFor(mode) : side}
+            </div>
           </div>
+          {
+            (mode === PENDING_CAPTURE_BUY || mode === CAPTURING_BUY) &&
+            <HandsPalmBackward />
+          }
+          {
+            (mode === PENDING_CAPTURE_SELL || mode === CAPTURING_SELL) &&
+            <HandsPalmForward />
+          }
         </div>
-        <p>
-          <button onClick={() => this.model.save('indexeddb://model')} >Save Model</button>
-          <button onClick={async () => {
-            this.setState({ mode: WAITING_FOR_MODEL });
-            this.model = await load('indexeddb://model');
-            this.setState({ mode: CLASSIFYING });
-          }}>Load Model</button>
-        </p>
-      </div>
+      </React.Fragment >
     );
   }
 }

@@ -4,6 +4,7 @@ import MobileNetVisualisation from './MobileNetVisualisation';
 import Model from './Model';
 import Webcam from './Webcam';
 import Game from './Game';
+import Hands from './hands/HandsPalmFacing';
 
 class App extends Component {
 
@@ -14,6 +15,7 @@ class App extends Component {
         <Route exact path="/model" component={Model} />
         <Route exact path="/webcam" component={Webcam} />
         <Route exact path="/game" component={Game} />
+        <Route exact path="/hands" component={Hands} />
       </React.Fragment>
     );
   }
