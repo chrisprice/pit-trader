@@ -47,49 +47,30 @@ class Webcam extends React.Component {
 
     render() {
         return (
-            <div
-                style={{
-                    width: '100%',
-                    paddingBottom: '100%',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    ...this.props.style
-                }}>
-                <div
+            <React.Fragment>
+                <canvas
+                    ref={canvas => this.canvas = canvas}
                     style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0
-                    }}>
-                    <canvas
-                        ref={canvas => this.canvas = canvas}
-                        style={{
-                            position: 'absolute',
-                            height: '100%',
-                            width: '100%'
-                        }}
-                    />
-                    <ReactWebcam
-                        ref={webcam => this.webcam = webcam}
-                        screenshotWidth={this.props.screenshotWidth}
-                        style={{
-                            objectFit: 'cover',
-                            transform: 'rotateY(180deg)',
-                            height: '100%',
-                            width: '100%',
-                            visibility: this.props.showCanvas ? 'hidden' : 'visible'
-                        }}
-                    />
-                </div>
-            </div>
+                        position: 'absolute'
+                    }}
+                />
+                <ReactWebcam
+                    ref={webcam => this.webcam = webcam}
+                    screenshotWidth={this.props.screenshotWidth}
+                    style={{
+                        objectFit: 'cover',
+                        transform: 'rotateY(180deg)',
+                        height: '100%',
+                        width: '100%'
+                    }}
+                />
+            </React.Fragment>
         );
     }
 }
 
 Webcam.defaultProps = {
-    onFrame: () => {},
+    onFrame: () => { },
     style: {}
 };
 
