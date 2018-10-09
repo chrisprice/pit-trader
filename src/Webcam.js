@@ -51,7 +51,8 @@ class Webcam extends React.Component {
                 <canvas
                     ref={canvas => this.canvas = canvas}
                     style={{
-                        position: 'absolute'
+                        position: 'absolute',
+                        visibility: 'hidden'
                     }}
                 />
                 <ReactWebcam

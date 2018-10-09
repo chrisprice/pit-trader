@@ -5,6 +5,8 @@ import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
 import Layout from './Layout';
 
+const CLASSIFY_SKIP_COUNT = 20;
+const CAPTURE_SKIP_COUNT = 1;
 const CAPTURE_COUNT = 200;
 const WAITING_FOR_FRAME = 'waiting-for-frame';
 const WAITING_FOR_MODEL = 'waiting-for-model';
@@ -15,7 +17,7 @@ const CAPTURING_SELL = 'capturing-sell'
 const TRAINING = 'training';
 const CLASSIFYING = 'classifying';
 
-const labelFor = ({ mode, captureCount }) => {
+const labelFor = ({ mode, captureCount, trainingProgress }) => {
   switch (mode) {
     case WAITING_FOR_FRAME:
     case WAITING_FOR_MODEL:
@@ -29,7 +31,7 @@ const labelFor = ({ mode, captureCount }) => {
     case CAPTURING_SELL:
       return `Sell - Capturing... (${captureCount}/${CAPTURE_COUNT})`
     case TRAINING:
-      return 'Training...'
+      return `Training... (${trainingProgress})`;
   }
 }
 
@@ -40,11 +42,18 @@ class Trainer extends Component {
     this.state = {
       mode: WAITING_FOR_FRAME,
       buyProbability: null,
-      sellProbability: null
+      sellProbability: null,
+      captureCount: null,
+      skipCount: null,
+      trainingProgress: 0,
     };
   }
 
   handleFrame = async (canvas) => {
+    if (this.state.skipCount > 0) {
+      this.setState({ skipCount: this.state.skipCount - 1 });
+      return;
+    }
     switch (this.state.mode) {
       case WAITING_FOR_FRAME: {
         this.setState({
@@ -63,7 +72,7 @@ class Trainer extends Component {
         return;
       }
       case CAPTURING_BUY: {
-        if (this.state.captureCount > 200) {
+        if (this.state.captureCount >= CAPTURE_COUNT) {
           this.setState({
             captureCount: 0,
             mode: PENDING_CAPTURE_SELL
@@ -76,17 +85,18 @@ class Trainer extends Component {
         }
         this.props.model.sample(BUY, canvas);
         this.setState({
-          captureCount: this.state.captureCount + 1
+          captureCount: this.state.captureCount + 1,
+          skipCount: CAPTURE_SKIP_COUNT
         });
         return;
       }
       case CAPTURING_SELL: {
-        if (this.state.captureCount > 200) {
+        if (this.state.captureCount >= CAPTURE_COUNT) {
           this.setState({
             captureCount: null,
             mode: TRAINING
           });
-          await this.props.model.train(console.log);
+          await this.props.model.train(trainingProgress => this.setState({ trainingProgress }));
           this.setState({
             mode: CLASSIFYING
           });
@@ -94,7 +104,8 @@ class Trainer extends Component {
         }
         this.props.model.sample(SELL, canvas);
         this.setState({
-          captureCount: this.state.captureCount + 1
+          captureCount: this.state.captureCount + 1,
+          skipCount: CAPTURE_SKIP_COUNT
         });
         return;
       }
@@ -104,7 +115,8 @@ class Trainer extends Component {
         const sellProbability = predictions.find(({ className }) => className === SELL).probability;
         this.setState({
           buyProbability,
-          sellProbability
+          sellProbability,
+          skipCount: CLASSIFY_SKIP_COUNT
         });
         return;
       }
@@ -125,7 +137,7 @@ class Trainer extends Component {
           flex: 1,
           padding: '2vh 0'
         }}>
-          {mode !== 'classifying' ? labelFor(this.state) : side}
+          {mode !== 'classifying' ? labelFor(this.state) : `${side} (${Math.max(buyProbability, sellProbability).toFixed(2)})`}
         </div>
       }>
         {
