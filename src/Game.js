@@ -3,8 +3,7 @@ import * as d3 from 'd3';
 import * as d3fc from 'd3fc';
 import Layout from './Layout';
 import { BUY, SELL } from './tensorflow/classifier';
-
-const CANVAS_MARGIN = 100;
+import leftPad from 'left-pad';
 
 const currencyFormatter = new Intl.NumberFormat('en-us', { style: 'currency', currency: 'USD' });
 
@@ -15,7 +14,8 @@ export default class Game extends Component {
 
     this.state = {
       index: 1,
-      cash: null
+      cash: null,
+      position: 1
     };
   }
 
@@ -25,77 +25,69 @@ export default class Game extends Component {
 
     const { data } = this.props;
 
-    var yExtent = d3fc.extentLinear()
+    const yExtent = d3fc.extentLinear()
       .accessors([d => d.close])
       .symmetricalAbout(data[0].open);
 
-    var xExtent = d3fc.extentTime()
+    const yExtentValue = yExtent(data);
+
+    const areaPadding =  0.1 * (yExtentValue[1] - yExtentValue[0]);
+
+    const xExtent = d3fc.extentTime()
       .accessors([d => d.date]);
 
     const xScale = d3.scaleTime()
       .domain(xExtent(data));
 
     const yScale = d3.scaleLinear()
-      .domain(yExtent(data));
+      .domain([yExtentValue[0] - areaPadding, yExtentValue[1] + areaPadding]);
 
-    const line = d3fc.seriesCanvasLine()
+    const area = d3fc.seriesCanvasArea()
       .crossValue(d => d.date)
-      .mainValue(d => d.close)
+      .mainValue(d => d.high)
+      .baseValue(d => d.low)
+      .curve(d3.curveStepBefore)
       .xScale(xScale)
       .yScale(yScale);
 
-    const colorScale = d3.scaleSequential(d3.interpolateRdGy)
-      .domain([-1, 1]);
+      const line = d3fc.seriesCanvasLine()
+      .crossValue(d => d.date)
+      .mainValue(d => d.close)
+      .curve(d3.curveStep)
+      .xScale(xScale)
+      .yScale(yScale);
 
     const surface = d3.select(this.surface)
       .on('draw', () => {
         const { width, height, pixelRatio } = d3.event.detail;
 
-        xScale.range([0, width - CANVAS_MARGIN * pixelRatio]);
-        yScale.range([height - CANVAS_MARGIN * pixelRatio, CANVAS_MARGIN * pixelRatio]);
+        xScale.range([0, width]);
+        yScale.range([height, 0]);
 
         const { data } = this.props;
-        const { index, position } = this.state;
+        const { index } = this.state;
 
         const ctx = surface.select('canvas')
           .node()
-          .getContext('2d');
+          .getContext('2d', { alpha: false });
+
+        area.context(ctx)
+          .decorate((ctx, data) => {
+            ctx.fillStyle = 'white';
+          });
 
         line.context(ctx)
           .decorate((ctx, data) => {
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 2 * CANVAS_MARGIN * pixelRatio;
-            ctx.strokeStyle = 'white';
-            ctx.stroke();
             ctx.lineCap = 'butt';
-            ctx.lineJoin = 'bevel';
-            ctx.lineWidth = 16 * pixelRatio;
+            ctx.lineJoin = 'miter';
+            ctx.lineWidth = 4 * pixelRatio;
             ctx.strokeStyle = 'black';
           });
 
         const visibleData = data.slice(0, index + 1);
 
+        area(visibleData);
         line(visibleData);
-
-        if (index < data.length) {
-          ctx.translate(xScale(visibleData[visibleData.length - 1].date), yScale(visibleData[visibleData.length - 1].close));
-          ctx.rotate(-(position / 3) * Math.PI);
-
-          const length = CANVAS_MARGIN * 0.66;
-          ctx.lineWidth = 8 * pixelRatio;
-          ctx.strokeStyle = colorScale(position);
-          ctx.lineCap = 'round'
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(length, 0);
-          ctx.moveTo(length * 0.7, length * -0.2);
-          ctx.lineTo(length, 0);
-          ctx.moveTo(length * 0.7, length * 0.2);
-          ctx.lineTo(length, 0);
-          ctx.stroke();
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-        }
 
         this.animationFrame = requestAnimationFrame(() => this.surface.requestRedraw());
       });
@@ -137,7 +129,7 @@ export default class Game extends Component {
       clearInterval(this.timer);
     }
   }
-  
+
   handleFrame = async (canvas) => {
     const predictions = await this.props.model.classify(canvas);
     const position = predictions.find(({ className }) => className === BUY).probability * 2 - 1;
@@ -152,27 +144,33 @@ export default class Game extends Component {
         title={
           <React.Fragment>
             <div style={{
-              textAlign: 'right',
+              textAlign: 'left',
               fontSize: '8vh',
-              flex: 1,
-              padding: '2vh 0',
+              width: '20%'
+            }}>
+              {this.state.position >= 0 ? 'Long' : 'Short'}
+            </div>
+            <div style={{
+              textAlign: 'center',
+              fontSize: '8vh',
+              width: '50%'
             }}>
               {currencyFormatter.format(this.state.cash)}
             </div>
             <div style={{
               textAlign: 'right',
               fontSize: '4vh',
-              padding: '2vh',
-              flex: 0.6,
+              width: '20%',
               color: this.state.delta < 0 ? 'red' : 'green'
             }}>
-              {this.state.delta != null && currencyFormatter.format(this.state.delta)}
+              {this.state.delta != null &&
+                leftPad(currencyFormatter.format(this.state.delta), 12)}
             </div>
           </React.Fragment>
         }>
         <d3fc-canvas
           use-device-pixel-ratio
-          style={{ flex: 'auto', opacity: 0.8 }}
+          style={{ flex: 'auto', opacity: 1 }}
           ref={surface => this.surface = surface}></d3fc-canvas>
       </Layout>
     );

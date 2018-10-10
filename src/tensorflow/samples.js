@@ -15,7 +15,7 @@ const concat = (data, sample) => {
 
 export default (dimensions) => {
     let data = null;
-    
+
     const add = (...sample) => {
         if (sample.length !== dimensions) {
             throw new Error(`Expected ${dimensions} values, received ${sample.length}`);
@@ -25,9 +25,19 @@ export default (dimensions) => {
 
     const get = (dimension) => data[dimension];
 
+    const clear = () => {
+        if (data != null) {
+            for (const datum of data) {
+                datum.dispose();
+            }
+            data = null;
+        }
+    }
+
     return {
         add,
-        get
+        get,
+        clear
     };
 };
 

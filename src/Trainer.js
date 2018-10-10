@@ -4,10 +4,14 @@ import HandsPalmForward from './hands/HandsPalmFacing';
 import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
 import Layout from './Layout';
+import leftPad from 'left-pad';
 
 const CLASSIFY_SKIP_COUNT = 20;
-const CAPTURE_SKIP_COUNT = 1;
-const CAPTURE_COUNT = 200;
+const CAPTURE_SKIP_COUNT = 0;
+const CAPTURE_COUNT = 100;
+const READY_PERIOD = 3000;
+const PHASE_COUNT = 3;
+const CAPTURE_COUNT_PER_PHASE = Math.floor(CAPTURE_COUNT / PHASE_COUNT);
 const WAITING_FOR_FRAME = 'waiting-for-frame';
 const WAITING_FOR_MODEL = 'waiting-for-model';
 const PENDING_CAPTURE_BUY = 'pending-capture-buy'
@@ -17,21 +21,28 @@ const CAPTURING_SELL = 'capturing-sell'
 const TRAINING = 'training';
 const CLASSIFYING = 'classifying';
 
-const labelFor = ({ mode, captureCount, trainingProgress }) => {
+const format = value => {
+  const rounded = Math.round(value * 100);
+  return `${leftPad(rounded, 3)}%`;
+};
+
+const labelFor = ({ mode, captureCount, trainingProgress, buyProbability, sellProbability }) => {
   switch (mode) {
     case WAITING_FOR_FRAME:
     case WAITING_FOR_MODEL:
       return 'Loading';
     case PENDING_CAPTURE_BUY:
-      return 'Buy - Get Ready';
+      return 'Long - Get Ready';
     case CAPTURING_BUY:
-      return `Buy - Capturing... (${captureCount}/${CAPTURE_COUNT})`
+      return `Capturing... (${format(captureCount / CAPTURE_COUNT_PER_PHASE)})`
     case PENDING_CAPTURE_SELL:
-      return 'Sell - Get Ready';
+      return 'Short - Get Ready';
     case CAPTURING_SELL:
-      return `Sell - Capturing... (${captureCount}/${CAPTURE_COUNT})`
+      return `Capturing... (${format(captureCount / CAPTURE_COUNT_PER_PHASE)})`
     case TRAINING:
-      return `Training... (${trainingProgress})`;
+      return `Training... (${format(trainingProgress)})`;
+    case CLASSIFYING:
+      return `${buyProbability > sellProbability ? ' Long' : 'Short'} (${format(Math.max(buyProbability, sellProbability))})`;
   }
 }
 
@@ -49,6 +60,10 @@ class Trainer extends Component {
     };
   }
 
+  componentWillUnmount() {
+    this.props.model.clearSamples();
+  }
+
   handleFrame = async (canvas) => {
     if (this.state.skipCount > 0) {
       this.setState({ skipCount: this.state.skipCount - 1 });
@@ -62,22 +77,23 @@ class Trainer extends Component {
         // kick off a dummy prediction to ensure the model is ready to go
         await this.props.model.classify(canvas);
         this.setState({
+          phase: 0,
           captureCount: 0,
           mode: PENDING_CAPTURE_BUY
         });
-        await sleep(5000);
+        await sleep(READY_PERIOD);
         this.setState({
           mode: CAPTURING_BUY
         });
         return;
       }
       case CAPTURING_BUY: {
-        if (this.state.captureCount >= CAPTURE_COUNT) {
+        if (this.state.captureCount >= CAPTURE_COUNT_PER_PHASE) {
           this.setState({
             captureCount: 0,
             mode: PENDING_CAPTURE_SELL
           });
-          await sleep(5000);
+          await sleep(READY_PERIOD);
           this.setState({
             mode: CAPTURING_SELL
           });
@@ -91,7 +107,19 @@ class Trainer extends Component {
         return;
       }
       case CAPTURING_SELL: {
-        if (this.state.captureCount >= CAPTURE_COUNT) {
+        if (this.state.captureCount >= CAPTURE_COUNT_PER_PHASE) {
+          if (this.state.phase < PHASE_COUNT - 1) {
+            this.setState({
+              captureCount: 0,
+              mode: PENDING_CAPTURE_BUY,
+              phase: this.state.phase + 1
+            });
+            await sleep(READY_PERIOD);
+            this.setState({
+              mode: CAPTURING_BUY
+            });
+            return;
+          }
           this.setState({
             captureCount: null,
             mode: TRAINING
@@ -100,6 +128,7 @@ class Trainer extends Component {
           this.setState({
             mode: CLASSIFYING
           });
+          this.props.onClassifying();
           return;
         }
         this.props.model.sample(SELL, canvas);
@@ -127,8 +156,7 @@ class Trainer extends Component {
   }
 
   render() {
-    const { buyProbability, sellProbability, mode } = this.state;
-    const side = buyProbability > sellProbability ? BUY : SELL;
+    const { mode } = this.state;
     return (
       <Layout title={
         <div style={{
@@ -137,7 +165,7 @@ class Trainer extends Component {
           flex: 1,
           padding: '2vh 0'
         }}>
-          {mode !== 'classifying' ? labelFor(this.state) : `${side} (${Math.max(buyProbability, sellProbability).toFixed(2)})`}
+          {labelFor(this.state)}
         </div>
       }>
         {

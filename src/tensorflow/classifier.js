@@ -33,6 +33,10 @@ const classifier = (model) => {
         });
     };
 
+    const clearSamples = () => {
+        samples.clear();
+    };
+
     const train = (progressCallback) =>
         new Promise((resolve) => {
             model.fit(samples.get(0), samples.get(1), {
@@ -69,7 +73,8 @@ const classifier = (model) => {
         sample,
         train,
         classify,
-        save
+        save,
+        clearSamples
     };
 };
 
