@@ -5,6 +5,7 @@ import Trainer from './Trainer';
 import Webcam from './Webcam';
 import Game from './Game';
 import Scoreboard from './Scoreboard';
+import Skipping from './skipping/Skipping';
 import Hands from './hands/HandsPalmFacing';
 import { create, load } from './tensorflow/classifier';
 import * as d3fc from 'd3fc';
@@ -179,6 +180,7 @@ class App extends Component {
             ref={ref => this.frameConsumer = ref}
           />} />
         <Route exact path='/hands' component={Hands} />
+        <Route exact path='/skipping' component={Skipping} />
       </React.Fragment>
     );
   }

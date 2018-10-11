@@ -9,6 +9,11 @@ import createTextMetricsCache from './util/textMetricsCache';
 import createLazyMap from './util/lazyMap';
 import getLabelAnchor from './util/labelAnchor';
 
+const MUG = 'mug';
+const WEBCAM = 'webcam';
+const IPAD = 'ipad';
+const LAMETRIC = 'lametric';
+
 const SYMBOL_SIZE_SCALE = 100;
 const SYMBOL_SIZE_MIN = 0.001;
 const MOVING_AVERAGE_COUNT = 5;
@@ -46,6 +51,9 @@ class MobileNetVisualisation extends Component {
     }));
     this.renderedLabelIds = [];
     this.textMetricsCache = null;
+    this.state = {
+      mode: WEBCAM
+    };
   }
 
   initialiseNodes(width, height) {
@@ -78,11 +86,31 @@ class MobileNetVisualisation extends Component {
     this.nodes = d3.shuffle(this.nodes);
   }
 
+  handleKeyUp = ({ key }) => {
+    switch (key) {
+      case 'w':
+        this.setState({ mode: WEBCAM });
+        return;
+      case 'm':
+        this.setState({ mode: MUG });
+        return;
+      case 'i':
+        this.setState({ mode: IPAD });
+        return;
+      case 'l':
+        this.setState({ mode: LAMETRIC });
+        return;
+    }
+  };
+
   componentWillUnmount() {
     clearInterval(this.timer);
+    document.body.removeEventListener('keyup', this.handleKeyUp);
   }
 
   componentDidMount() {
+
+    document.body.addEventListener('keyup', this.handleKeyUp);
     this.timer = setInterval(() => this.handleTimer(), 100);
 
     const surface = d3.select(this.surface)
@@ -223,15 +251,69 @@ class MobileNetVisualisation extends Component {
   }
 
   handleFrame(frame) {
-    this.frame = frame;
+    switch (this.state.mode) {
+      case WEBCAM:
+        this.frame = frame;
+        return;
+      case MUG:
+        this.frame = this.mug;
+        return;
+      case IPAD:
+        this.frame = this.ipad;
+        return;
+      case LAMETRIC:
+        this.frame = this.lametric;
+        return;
+    }
   }
 
   render() {
     return (
-      <d3fc-canvas
-        use-device-pixel-ratio
-        style={{ width: '100vw', height: '100vh' }}
-        ref={surface => this.surface = surface}></d3fc-canvas>
+      <React.Fragment>
+        <img
+          ref={ref => this.mug = ref}
+          src={require('./samples/mug.png')}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            objectFit: 'cover',
+            height: '100%',
+            width: '100%',
+            display: this.state.mode === MUG ? '' : 'none'
+          }}
+        />
+        <img
+          ref={ref => this.ipad = ref}
+          src={require('./samples/ipad.png')}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            objectFit: 'cover',
+            height: '100%',
+            width: '100%',
+            display: this.state.mode === IPAD ? '' : 'none'
+          }}
+        />
+        <img
+          ref={ref => this.lametric = ref}
+          src={require('./samples/lametric.png')}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            objectFit: 'cover',
+            height: '100%',
+            width: '100%',
+            display: this.state.mode === LAMETRIC ? '' : 'none'
+          }}
+        />
+        <d3fc-canvas
+          use-device-pixel-ratio
+          style={{ width: '100vw', height: '100vh' }}
+          ref={surface => this.surface = surface}></d3fc-canvas>
+      </React.Fragment>
     );
   }
 }
