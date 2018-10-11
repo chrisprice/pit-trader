@@ -20,7 +20,7 @@ export default class Scoreboard extends React.Component {
   }
 
   onKeyUp = ({ key }) => {
-    if (this.props.playerIndex >= this.props.scores.length) {
+    if (this.props.playerIndex == null) {
       return;
     }
     let playerName = this.state.playerName;
@@ -72,7 +72,7 @@ export default class Scoreboard extends React.Component {
           <tbody>
             {
               scores.map(({ score, name }, index) => {
-                return <tr>
+                return <tr key={index}>
                   <td>{index + 1}</td>
                   <td>{currency(score)}</td>
                   <td>{playerIndex === index ? playerName : name}</td>

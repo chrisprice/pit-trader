@@ -18,6 +18,26 @@ const TRAINING_COMPLETE = 'training-complete';
 const GAME_COMPLETE = 'game-complete';
 const SCORE_COMPLETE = 'score-complete';
 
+const loadScores = () => {
+  try {
+    return JSON.parse(localStorage.scores);
+  }
+  catch {
+    return [
+      { score: 1e7, name: 'AAA' },
+      { score: 9e6, name: 'BBB' },
+      { score: 8e6, name: 'CCC' },
+      { score: 7e6, name: 'DDD' },
+      { score: 6e6, name: 'EEE' },
+      { score: 5e6, name: 'FFF' },
+      { score: 4e6, name: 'GGG' },
+      { score: 3e6, name: 'HHH' },
+      { score: 2e6, name: 'III' },
+      { score: 1047200, name: 'USA' }
+    ];
+  }
+};
+
 class App extends Component {
 
   constructor() {
@@ -25,10 +45,10 @@ class App extends Component {
     this.state = {
       frame: null,
       data: generator(100),
-      customModel: null,
-      mode: SCORE_COMPLETE
+      customModel: create(),
+      mode: SCORE_COMPLETE,
+      scores: loadScores()
     };
-    this.loadModel();
     global.app = this;
   }
 
@@ -47,8 +67,10 @@ class App extends Component {
     this.state.customModel.save('indexeddb://model');
   }
 
-  handleOnFrame = (frame) => {
-    if (this.frameConsumer == null || this.state.customModel == null) {
+  handleFrame = (frame) => {
+    if (this.frameConsumer == null ||
+      this.state.customModel == null ||
+      this.frameConsumer.handleFrame == null) {
       return;
     }
     this.frameConsumer.handleFrame(frame);
@@ -58,6 +80,10 @@ class App extends Component {
     switch (this.state.mode) {
       case TRAINING_COMPLETE:
         this.props.history.push('/play');
+        this.setState({
+          data: generator(100),
+          playerIndex: -1
+        })
         return;
       case GAME_COMPLETE:
         this.props.history.push('/');
@@ -77,7 +103,40 @@ class App extends Component {
           return;
       }
     });
-    this.props.history.push('/');
+    if (this.props.location.pathname === '/train' || this.props.location.pathname === '/play') {
+      this.props.history.push('/');
+    }
+  }
+
+  handlePlayerNameChange = (playerName) => {
+    const { playerIndex, scores } = this.state;
+    if (playerIndex == null) {
+      return;
+    }
+    const updatedScores = [
+      ...scores.slice(0, playerIndex),
+      { ...scores[playerIndex], name: playerName },
+      ...scores.slice(playerIndex + 1, scores.length - 1)
+    ];
+    localStorage.scores = JSON.stringify(updatedScores);
+    this.setState({
+      scores: updatedScores
+    });
+  }
+
+  handleGameComplete = (score) => {
+    const { scores } = this.state;
+    const playerIndex = scores.findIndex(({ score: highScore }) => score > highScore);
+    const updatedScores = playerIndex < 0 ? scores : [
+      ...scores.slice(0, playerIndex),
+      { score, name: '' },
+      ...scores.slice(playerIndex + 1, scores.length - 1)
+    ];
+    this.setState({
+      mode: GAME_COMPLETE,
+      playerIndex: playerIndex < 0 ? null : playerIndex,
+      scores: updatedScores
+    });
   }
 
   render() {
@@ -91,7 +150,7 @@ class App extends Component {
           zIndex: -1,
           opacity: 1
         }} >
-          <Webcam onFrame={this.handleOnFrame} />
+          <Webcam onFrame={this.handleFrame} />
         </div>
         <Route exact path='/train' render={() =>
           <Trainer
@@ -105,17 +164,20 @@ class App extends Component {
             cash={1e6}
             data={this.state.data}
             interval={500}
-            onCashUpdate={() => { }}
-            onComplete={() => { this.setState({ mode: GAME_COMPLETE }) }}
+            onComplete={this.handleGameComplete}
             ref={ref => this.frameConsumer = ref} />
         } />
         <Route exact path='/' render={() =>
           <Scoreboard
-            onPlayerNameChange={() => {}}
-            scores={[{ score: 1000000 }]}
-            playerIndex={0} />
+            onPlayerNameChange={this.handlePlayerNameChange}
+            scores={this.state.scores}
+            playerIndex={this.state.playerIndex}
+            ref={ref => this.frameConsumer = ref} />
         } />
-        <Route exact path='/mobilenet' component={MobileNetVisualisation} />
+        <Route exact path='/mobilenet' render={() =>
+          <MobileNetVisualisation
+            ref={ref => this.frameConsumer = ref}
+          />} />
         <Route exact path='/hands' component={Hands} />
       </React.Fragment>
     );

@@ -78,8 +78,12 @@ class MobileNetVisualisation extends Component {
     this.nodes = d3.shuffle(this.nodes);
   }
 
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
   componentDidMount() {
-    setInterval(() => this.handleTimer(), 100);
+    this.timer = setInterval(() => this.handleTimer(), 100);
 
     const surface = d3.select(this.surface)
       .on('draw', () => {
@@ -161,7 +165,7 @@ class MobileNetVisualisation extends Component {
 
         const labelLayoutStrategy = d3fc.layoutGreedy()
           .bounds({
-            x: 0, 
+            x: 0,
             y: 0,
             width,
             height
@@ -176,7 +180,7 @@ class MobileNetVisualisation extends Component {
         })))
 
         ctx.globalAlpha = 0.8;
-        ctx.fillStyle = 'black';
+
         ctx.strokeStyle = 'gray';
         ctx.lineCap = 'round';
         ctx.lineWidth = 2 * devicePixelRatio;
@@ -185,6 +189,9 @@ class MobileNetVisualisation extends Component {
           const { text, textWidth, textHeight } = labels[i];
           const { x, y, width, height, location } = labelLocations[i];
           ctx.setTransform(1, 0, 0, 1, x, y);
+          ctx.fillStyle = 'white';
+          ctx.fillRect(ANCHOR_MARGIN, ANCHOR_MARGIN, width - 2 * ANCHOR_MARGIN, height - 2 * ANCHOR_MARGIN);
+          ctx.fillStyle = 'black';
           ctx.fillText(text, (width - textWidth) / 2, (height - textHeight) / 2 + LABEL_VERTICAL_OFFSET * textHeight);
           const labelAnchor = getLabelAnchor({
             width,
@@ -197,75 +204,6 @@ class MobileNetVisualisation extends Component {
           ctx.lineTo(labelAnchor.x2, labelAnchor.y2);
           ctx.stroke();
         }
-
-
-
-        // const locations = this.sortedKeys.map(
-        //   (key, index) => {
-        //     const { label, wordNetId, ranks, probabilities } = this.predictions.get(key);
-        //     const labelWidth = this.textMetricsCache(label).width;
-        //     const rank = movingAverage(ranks);
-        //     const circle = {
-        //       type: 'circle',
-        //       x: (index % cellsPerColumn) * cellSize + offset,
-        //       y: Math.floor(index / cellsPerColumn) * cellSize + offset,
-        //       width: cellSize,
-        //       height: cellSize,
-        //       rank,
-        //       probability: movingAverage(probabilities),
-        //       hidden: false,
-        //     };
-        //     return [
-        //       circle,
-        //       {
-        //         type: 'label',
-        //         label,
-        //         labelWidth,
-        //         wordNetId,
-        //         rank,
-        //         circle,
-        //         x: circle.x,
-        //         y: circle.y,
-        //         width: 2 * labelWidth,
-        //         height: 2 * labelWidth,
-        //         hidden: false,
-        //       }
-        //     ];
-        //   })
-        //   .filter(x => x != null)
-        //   .reduce((a, b) => a.concat(b), [])
-        //   .sort((a, b) => a.rank - b.rank);
-
-
-        // ctx.setTransform(1, 0, 0, 1, 0, 0);
-        // ctx.fillStyle = 'black';
-        // ctx.strokeStyle = 'gray';
-
-        // const labelLocations = locations.filter(({ type, rank }) => type === 'label' && rank <= 5);
-
-        // labelLayoutStrategy(labelLocations)
-        //   .forEach(({ x, y, ...other }, index) => {
-        //     console.log(other);
-        //     const location = labelLocations[index];
-        //     if (location.type !== 'label') {
-        //       return;
-        //     }
-        //     ctx.fillText(
-        //       location.label,
-        //       x + location.labelWidth / 2,
-        //       y + location.labelWidth + LABEL_VERTICAL_OFFSET
-        //     );
-        //     ctx.beginPath()
-        //     ctx.moveTo(
-        //       location.circle.x,
-        //       location.circle.y
-        //     );
-        //     ctx.lineTo(
-        //       x + location.width / 2 + compare(location.circle.x, x + location.width / 2) * 1.1 * (location.labelWidth / 2),
-        //       y + location.height / 2 + compare(location.circle.y, y + location.height / 2) * 1.5 * (LABEL_VERTICAL_OFFSET),
-        //     );
-        //     ctx.stroke();
-        //   });
       });
   }
 
@@ -284,20 +222,16 @@ class MobileNetVisualisation extends Component {
     this.surface.requestRedraw();
   }
 
+  handleFrame(frame) {
+    this.frame = frame;
+  }
+
   render() {
     return (
-      <React.Fragment>
-        <div
-          style={{ position: 'absolute', width: '100vw', height: '100vh', overflow: 'hidden' }} >
-          <Webcam
-            onFrame={frame => this.frame = frame} 
-            style={{ opacity: 0.5 }} />
-        </div>
-        <d3fc-canvas
-          use-device-pixel-ratio
-          style={{ width: '100vw', height: '100vh' }}
-          ref={surface => this.surface = surface}></d3fc-canvas>
-      </React.Fragment >
+      <d3fc-canvas
+        use-device-pixel-ratio
+        style={{ width: '100vw', height: '100vh' }}
+        ref={surface => this.surface = surface}></d3fc-canvas>
     );
   }
 }

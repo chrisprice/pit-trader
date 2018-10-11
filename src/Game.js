@@ -19,26 +19,17 @@ export default class Game extends Component {
 
   componentDidMount() {
     this.timer = setTimeout(() => this.tick(), this.props.interval);
-    this.animationFrame = requestAnimationFrame(() => this.surface.requestRedraw());
-
-    const { data } = this.props;
+    this.surface.requestRedraw();
 
     const yExtent = d3fc.extentLinear()
-      .accessors([d => d.close])
-      .symmetricalAbout(data[0].open);
-
-    const yExtentValue = yExtent(data);
-
-    const areaPadding =  0.1 * (yExtentValue[1] - yExtentValue[0]);
+      .accessors([d => d.close]);
 
     const xExtent = d3fc.extentTime()
       .accessors([d => d.date]);
 
-    const xScale = d3.scaleTime()
-      .domain(xExtent(data));
+    const xScale = d3.scaleTime();
 
-    const yScale = d3.scaleLinear()
-      .domain([yExtentValue[0] - areaPadding, yExtentValue[1] + areaPadding]);
+    const yScale = d3.scaleLinear();
 
     const area = d3fc.seriesCanvasArea()
       .crossValue(d => d.date)
@@ -48,7 +39,7 @@ export default class Game extends Component {
       .xScale(xScale)
       .yScale(yScale);
 
-      const line = d3fc.seriesCanvasLine()
+    const line = d3fc.seriesCanvasLine()
       .crossValue(d => d.date)
       .mainValue(d => d.close)
       .curve(d3.curveStep)
@@ -58,11 +49,18 @@ export default class Game extends Component {
     const surface = d3.select(this.surface)
       .on('draw', () => {
         const { width, height, pixelRatio } = d3.event.detail;
-
-        xScale.range([0, width]);
-        yScale.range([height, 0]);
-
         const { data } = this.props;
+
+        yExtent.symmetricalAbout(data[0].open);
+
+        const yExtentValue = yExtent(data);
+        const areaPadding = 0.1 * (yExtentValue[1] - yExtentValue[0]);
+
+        xScale.range([0, width])
+          .domain(xExtent(data));
+        yScale.range([height, 0])
+          .domain([yExtentValue[0] - areaPadding, yExtentValue[1] + areaPadding]);
+
         const { index } = this.state;
 
         const ctx = surface.select('canvas')
@@ -87,13 +85,16 @@ export default class Game extends Component {
         area(visibleData);
         line(visibleData);
 
-        this.animationFrame = requestAnimationFrame(() => this.surface.requestRedraw());
+        requestAnimationFrame(() => {
+          if (this.surface != null) {
+            this.surface.requestRedraw();
+          }
+        });
       });
   }
 
   componentWillUnmount() {
     clearTimeout(this.timer);
-    cancelAnimationFrame(this.animationFrame);
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -159,17 +160,17 @@ export default class Game extends Component {
               fontSize: '8vh',
               width: '50%'
             }}>
-              {this.state.index >= this.props.data.length ?
-                'Game Over' : currency(this.state.cash)}
+              {currency(this.state.cash)}
             </div>
             <div style={{
               textAlign: 'right',
               fontSize: '4vh',
               width: '20%',
-              color: this.state.delta < 0 ? 'red' : 'green'
+              color: this.state.delta < 0 ? 'red' : this.state.delta > 0 ? 'green' : 'inherit'
             }}>
-              {this.state.delta != null &&
-                currency(this.state.delta)}
+              {this.state.index >= this.props.data.length ?
+                'Game Over' :
+                this.state.delta != null && currency(this.state.delta)}
             </div>
           </React.Fragment>
         }>
