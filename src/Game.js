@@ -3,9 +3,7 @@ import * as d3 from 'd3';
 import * as d3fc from 'd3fc';
 import Layout from './Layout';
 import { BUY, SELL } from './tensorflow/classifier';
-import leftPad from 'left-pad';
-
-const currencyFormatter = new Intl.NumberFormat('en-us', { style: 'currency', currency: 'USD' });
+import { currency } from './util/format';
 
 export default class Game extends Component {
 
@@ -15,12 +13,12 @@ export default class Game extends Component {
     this.state = {
       index: 1,
       cash: null,
-      position: 1
+      position: null
     };
   }
 
   componentDidMount() {
-    this.timer = setInterval(() => this.tick(), this.props.interval);
+    this.timer = setTimeout(() => this.tick(), this.props.interval);
     this.animationFrame = requestAnimationFrame(() => this.surface.requestRedraw());
 
     const { data } = this.props;
@@ -94,7 +92,7 @@ export default class Game extends Component {
   }
 
   componentWillUnmount() {
-    clearInterval(this.timer);
+    clearTimeout(this.timer);
     cancelAnimationFrame(this.animationFrame);
   }
 
@@ -108,9 +106,10 @@ export default class Game extends Component {
   }
 
   tick() {
-    const { data, onCashUpdate, onComplete } = this.props;
+    const { data, onComplete, interval } = this.props;
     const { cash, position, index } = this.state;
-    if (index >= data.length) {
+    if (position == null) {
+      this.timer = setTimeout(() => this.tick(), interval);
       return;
     }
     const { open, close } = data[index];
@@ -123,11 +122,15 @@ export default class Game extends Component {
       cash: updatedCash,
       index: index + 1
     });
-    onCashUpdate(cash);
     if (index === data.length - 1) {
-      onComplete();
-      clearInterval(this.timer);
+      onComplete(updatedCash);
+      this.setState({
+        delta: null
+      });
+      return;
     }
+    const acceleratedInterval = interval * (1 - index / data.length);
+    this.timer = setTimeout(() => this.tick(), acceleratedInterval);
   }
 
   handleFrame = async (canvas) => {
@@ -148,14 +151,16 @@ export default class Game extends Component {
               fontSize: '8vh',
               width: '20%'
             }}>
-              {this.state.position >= 0 ? 'Long' : 'Short'}
+              {this.state.position != null &&
+                this.state.position >= 0 ? 'Long' : 'Short'}
             </div>
             <div style={{
               textAlign: 'center',
               fontSize: '8vh',
               width: '50%'
             }}>
-              {currencyFormatter.format(this.state.cash)}
+              {this.state.index >= this.props.data.length ?
+                'Game Over' : currency(this.state.cash)}
             </div>
             <div style={{
               textAlign: 'right',
@@ -164,7 +169,7 @@ export default class Game extends Component {
               color: this.state.delta < 0 ? 'red' : 'green'
             }}>
               {this.state.delta != null &&
-                leftPad(currencyFormatter.format(this.state.delta), 12)}
+                currency(this.state.delta)}
             </div>
           </React.Fragment>
         }>

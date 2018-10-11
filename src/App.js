@@ -4,6 +4,7 @@ import MobileNetVisualisation from './MobileNetVisualisation';
 import Trainer from './Trainer';
 import Webcam from './Webcam';
 import Game from './Game';
+import Scoreboard from './Scoreboard';
 import Hands from './hands/HandsPalmFacing';
 import { create, load } from './tensorflow/classifier';
 import * as d3fc from 'd3fc';
@@ -13,7 +14,6 @@ const generator = d3fc.randomFinancial()
   .mu(0.1)
   .sigma(1.5);
 
-const STARTUP_COMPLETE = 'statup-complete';
 const TRAINING_COMPLETE = 'training-complete';
 const GAME_COMPLETE = 'game-complete';
 const SCORE_COMPLETE = 'score-complete';
@@ -26,7 +26,7 @@ class App extends Component {
       frame: null,
       data: generator(100),
       customModel: null,
-      mode: STARTUP_COMPLETE
+      mode: SCORE_COMPLETE
     };
     this.loadModel();
     global.app = this;
@@ -57,7 +57,15 @@ class App extends Component {
   advance() {
     switch (this.state.mode) {
       case TRAINING_COMPLETE:
-        this.props.history.push('/game');
+        this.props.history.push('/play');
+        return;
+      case GAME_COMPLETE:
+        this.props.history.push('/');
+        this.setState({ mode: SCORE_COMPLETE });
+        return;
+      case SCORE_COMPLETE:
+        this.props.history.push('/train');
+        return;
     }
   }
 
@@ -68,7 +76,8 @@ class App extends Component {
           this.advance();
           return;
       }
-    })
+    });
+    this.props.history.push('/');
   }
 
   render() {
@@ -84,23 +93,29 @@ class App extends Component {
         }} >
           <Webcam onFrame={this.handleOnFrame} />
         </div>
-        <Route exact path='/' component={MobileNetVisualisation} />
-        <Route exact path='/trainer' render={() =>
+        <Route exact path='/train' render={() =>
           <Trainer
             model={this.state.customModel}
             onClassifying={() => { this.setState({ mode: TRAINING_COMPLETE }) }}
             ref={ref => this.frameConsumer = ref} />
         } />
-        <Route exact path='/game' render={() =>
+        <Route exact path='/play' render={() =>
           <Game
             model={this.state.customModel}
             cash={1e6}
             data={this.state.data}
-            interval={1000}
+            interval={500}
             onCashUpdate={() => { }}
             onComplete={() => { this.setState({ mode: GAME_COMPLETE }) }}
             ref={ref => this.frameConsumer = ref} />
         } />
+        <Route exact path='/' render={() =>
+          <Scoreboard
+            onPlayerNameChange={() => {}}
+            scores={[{ score: 1000000 }]}
+            playerIndex={0} />
+        } />
+        <Route exact path='/mobilenet' component={MobileNetVisualisation} />
         <Route exact path='/hands' component={Hands} />
       </React.Fragment>
     );
