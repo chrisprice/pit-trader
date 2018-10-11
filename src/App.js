@@ -45,10 +45,12 @@ class App extends Component {
     super();
     this.state = {
       frame: null,
-      data: generator(100),
       customModel: create(),
       mode: SCORE_COMPLETE,
-      scores: loadScores()
+      scores: loadScores(),
+      data: generator(100),
+      lastData: generator(100),
+      playerIndex: -1
     };
     global.app = this;
   }
@@ -83,6 +85,7 @@ class App extends Component {
         this.props.history.push('/play');
         this.setState({
           data: generator(100),
+          lastData: generator(100),
           playerIndex: -1
         })
         return;
@@ -163,6 +166,7 @@ class App extends Component {
           <Game
             model={this.state.customModel}
             cash={1e6}
+            lastData={this.state.lastData}
             data={this.state.data}
             interval={500}
             onComplete={this.handleGameComplete}

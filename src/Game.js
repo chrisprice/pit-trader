@@ -11,7 +11,7 @@ export default class Game extends Component {
     super();
 
     this.state = {
-      index: 1,
+      index: -3,
       cash: null,
       position: null
     };
@@ -49,15 +49,17 @@ export default class Game extends Component {
     const surface = d3.select(this.surface)
       .on('draw', () => {
         const { width, height, pixelRatio } = d3.event.detail;
-        const { data } = this.props;
+        const { data, lastData } = this.props;
 
-        yExtent.symmetricalAbout(data[0].open);
+        const chartData = index <= 0 ? lastData : data;
 
-        const yExtentValue = yExtent(data);
+        yExtent.symmetricalAbout(chartData[0].open);
+
+        const yExtentValue = yExtent(chartData);
         const areaPadding = 0.1 * (yExtentValue[1] - yExtentValue[0]);
 
         xScale.range([0, width])
-          .domain(xExtent(data));
+          .domain(xExtent(chartData));
         yScale.range([height, 0])
           .domain([yExtentValue[0] - areaPadding, yExtentValue[1] + areaPadding]);
 
@@ -68,19 +70,19 @@ export default class Game extends Component {
           .getContext('2d', { alpha: false });
 
         area.context(ctx)
-          .decorate((ctx, data) => {
+          .decorate((ctx) => {
             ctx.fillStyle = 'white';
           });
 
         line.context(ctx)
-          .decorate((ctx, data) => {
+          .decorate((ctx) => {
             ctx.lineCap = 'butt';
             ctx.lineJoin = 'miter';
             ctx.lineWidth = 4 * pixelRatio;
             ctx.strokeStyle = 'black';
           });
 
-        const visibleData = data.slice(0, index + 1);
+        const visibleData = index <= 0 ? chartData : chartData.slice(0, index + 1);
 
         area(visibleData);
         line(visibleData);
@@ -110,6 +112,13 @@ export default class Game extends Component {
     const { data, onComplete, interval } = this.props;
     const { cash, position, index } = this.state;
     if (position == null) {
+      this.timer = setTimeout(() => this.tick(), interval);
+      return;
+    }
+    if (index <= 0) {
+      this.setState({
+        index: index + 1
+      })
       this.timer = setTimeout(() => this.tick(), interval);
       return;
     }
@@ -160,7 +169,7 @@ export default class Game extends Component {
               fontSize: '8vh',
               width: '50%'
             }}>
-              {currency(this.state.cash)}
+              {this.state.index < 0 ? 'Get Ready' : currency(this.state.cash)}
             </div>
             <div style={{
               textAlign: 'right',
