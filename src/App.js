@@ -25,16 +25,16 @@ const loadScores = () => {
   }
   catch {
     return [
-      { score: 1e7, name: 'AAA' },
-      { score: 9e6, name: 'BBB' },
-      { score: 8e6, name: 'CCC' },
-      { score: 7e6, name: 'DDD' },
-      { score: 6e6, name: 'EEE' },
-      { score: 5e6, name: 'FFF' },
-      { score: 4e6, name: 'GGG' },
-      { score: 3e6, name: 'HHH' },
-      { score: 2e6, name: 'III' },
-      { score: 1047200, name: 'USA' }
+      { score: 1047200, name: 'USA' },
+      { score: 985600, name: 'SW' },
+      { score: 874300, name: 'USA' },
+      { score: 7e5, name: 'DK' },
+      { score: 6e5, name: 'DK' },
+      { score: 5e5, name: 'DK' },
+      { score: 4e5, name: 'DK' },
+      { score: 3e5, name: 'DK' },
+      { score: 2e5, name: 'DK' },
+      { score: 1e5, name: 'DK' },
     ];
   }
 };
