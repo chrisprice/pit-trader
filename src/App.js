@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Route, withRouter } from 'react-router-dom'
+import { Route, withRouter, Redirect } from 'react-router-dom'
 import MobileNetVisualisation from './MobileNetVisualisation';
 import Trainer from './Trainer';
 import Webcam from './Webcam';
@@ -51,7 +51,7 @@ class App extends Component {
       scores: loadScores(),
       data: generator(100),
       lastData: generator(100),
-      playerIndex: -1
+      playerIndex: null
     };
     global.app = this;
   }
@@ -87,7 +87,7 @@ class App extends Component {
         this.setState({
           data: generator(100),
           lastData: generator(100),
-          playerIndex: -1
+          playerIndex: null
         })
         return;
       case GAME_COMPLETE:
@@ -118,29 +118,29 @@ class App extends Component {
     if (playerIndex == null) {
       return;
     }
-    const updatedScores = [
-      ...scores.slice(0, playerIndex),
-      { ...scores[playerIndex], name: playerName },
-      ...scores.slice(playerIndex + 1, scores.length - 1)
-    ];
-    localStorage.scores = JSON.stringify(updatedScores);
+    scores[playerIndex].name = playerName;
+    localStorage.scores = JSON.stringify(scores);
     this.setState({
-      scores: updatedScores
+      scores
     });
   }
 
   handleGameComplete = (score) => {
     const { scores } = this.state;
     const playerIndex = scores.findIndex(({ score: highScore }) => score > highScore);
-    const updatedScores = playerIndex < 0 ? scores : [
-      ...scores.slice(0, playerIndex),
-      { score, name: '' },
-      ...scores.slice(playerIndex + 1, scores.length - 1)
-    ];
+    if (playerIndex >= 0 && playerIndex < 10) {
+      scores.splice(playerIndex, 0, {
+        score,
+        name: ''
+      });
+    }
+    if (scores.length > 10) {
+      scores.length = 10;
+    }
     this.setState({
       mode: GAME_COMPLETE,
       playerIndex: playerIndex < 0 ? null : playerIndex,
-      scores: updatedScores
+      scores: scores
     });
   }
 
@@ -180,15 +180,19 @@ class App extends Component {
             playerIndex={this.state.playerIndex}
             ref={ref => this.frameConsumer = ref} />
         } />
+        <Route exact path='/reset' render={() => {
+          delete localStorage.scores;
+          return <Redirect to='/' />;
+        }} />
         <Route exact path='/mobilenet' render={() =>
           <MobileNetVisualisation
             ref={ref => this.frameConsumer = ref}
           />} />
         <Route exact path='/hands' render={() =>
-          <Layout><Hands/></Layout>
+          <Layout><Hands /></Layout>
         } />
-        <Route exact path='/skipping'  render={() =>
-          <Layout><Skipping/></Layout>
+        <Route exact path='/skipping' render={() =>
+          <Layout><Skipping /></Layout>
         } />
       </React.Fragment>
     );
