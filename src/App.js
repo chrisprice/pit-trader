@@ -187,7 +187,9 @@ class App extends Component {
         <Route exact path='/hands' render={() =>
           <Layout><Hands/></Layout>
         } />
-        <Route exact path='/skipping' component={Skipping} />
+        <Route exact path='/skipping'  render={() =>
+          <Layout><Skipping/></Layout>
+        } />
       </React.Fragment>
     );
   }

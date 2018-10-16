@@ -1,0 +1,48 @@
+@keyframes skipping-jumper {
+  from {
+    transform: translateY(10%);
+  }
+  49% {
+    transform: translateY(10%);
+  }
+  50% {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+}
+
+.skipping>.jumper {
+  will-change: transform;
+  transform-origin: center center;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: 1s;
+  animation-name: skipping-jumper;
+}
+
+
+@keyframes skipping-rope {
+  from {
+    transform: scaleY(-1);
+  }
+  49% {
+    transform: scaleY(-1);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.skipping>.rope {
+  will-change: transform;
+  transform-origin: center 52%;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: 1s;
+  animation-name: skipping-rope;
+}

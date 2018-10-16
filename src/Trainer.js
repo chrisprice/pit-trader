@@ -5,6 +5,7 @@ import HandsPalmBackward from './hands/HandsPalmAway';
 import { sleep } from './util';
 import Layout from './Layout';
 import leftPad from 'left-pad';
+import Skipping from './skipping/Skipping';
 
 const CLASSIFY_SKIP_COUNT = 20;
 const CAPTURE_SKIP_COUNT = 0;
@@ -175,6 +176,10 @@ class Trainer extends Component {
         {
           (mode === PENDING_CAPTURE_SELL || mode === CAPTURING_SELL) &&
           <HandsPalmForward />
+        }
+        {
+          (mode === TRAINING) &&
+          <Skipping />
         }
       </Layout>
     );

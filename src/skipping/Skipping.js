@@ -1,7 +1,9 @@
 import React from 'react';
+import './index.css';
+
 // Created by Hollmann Graphic Design from Noun Project
-export default ({ width, height }) =>
-    <svg viewBox="0 0 300 300" width={width} height={height}>
+export default () =>
+    <svg class="skipping" viewBox="0 0 300 300">
         <path class="left" d="M43.85,96.3c10.99-0.3,19.67-9.46,19.37-20.45c-0.1-3.63-1.17-7.01-2.94-9.9c-3.61-5.86-10.15-9.68-17.51-9.48
             c-11,0.31-19.67,9.46-19.37,20.47C23.69,87.93,32.84,96.59,43.85,96.3z M82.95,158.02c0.9-1.85,0.05-5.81-3.01-7.37
             c-0.28-0.14-0.61-0.27-0.98-0.35l-18.41-8.6L51.97,111c-0.8-5.95-6.28-11.02-12.88-10.87C32.31,100.28,26.93,105,26.65,111h-0.04

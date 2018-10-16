@@ -24,6 +24,7 @@ body {
   padding: 0;
   font-family: 'VT323';
   perspective: 1000px;
+  perspective-origin: bottom center;
 }
 
 html, body, #root {
