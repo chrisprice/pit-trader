@@ -7,6 +7,7 @@ import Game from './Game';
 import Scoreboard from './Scoreboard';
 import Skipping from './skipping/Skipping';
 import Hands from './hands/HandsPalmFacing';
+import Layout from './Layout';
 import { create, load } from './tensorflow/classifier';
 import * as d3fc from 'd3fc';
 
@@ -183,7 +184,9 @@ class App extends Component {
           <MobileNetVisualisation
             ref={ref => this.frameConsumer = ref}
           />} />
-        <Route exact path='/hands' component={Hands} />
+        <Route exact path='/hands' render={() =>
+          <Layout><Hands/></Layout>
+        } />
         <Route exact path='/skipping' component={Skipping} />
       </React.Fragment>
     );

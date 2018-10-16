@@ -1,9 +1,10 @@
 import React from 'react';
 import RightHandPalmAway from './RightHandPalmAway';
 import LeftHandPalmAway from './LeftHandPalmAway';
+import './index.css';
 
 export default () =>
-    <svg viewBox="0 0 100 75">
+    <svg className="hands" viewBox="0 0 100 75">
         <g transform="translate(-15, 10) rotate(20, 38, 38)">
             <RightHandPalmAway width="75" height="75" />
         </g>
