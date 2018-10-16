@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.2/workbox-sw.js");
 
 importScripts(
-  "/pit-trader/precache-manifest.4c4d2094fda1bd4341e1df413822349c.js"
+  "/pit-trader/precache-manifest.2b94095386e75f6449814c63d4774a0c.js"
 );
 
 workbox.clientsClaim();
