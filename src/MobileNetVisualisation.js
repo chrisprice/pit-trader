@@ -52,7 +52,7 @@ class MobileNetVisualisation extends Component {
     this.renderedLabelIds = [];
     this.textMetricsCache = null;
     this.state = {
-      mode: WEBCAM
+      mode: MUG
     };
   }
 
@@ -83,34 +83,34 @@ class MobileNetVisualisation extends Component {
         };
       });
 
-    this.nodes = d3.shuffle(this.nodes);
+    // this.nodes = d3.shuffle(this.nodes);
   }
 
-  handleKeyUp = ({ key }) => {
-    switch (key) {
-      case 'w':
-        this.setState({ mode: WEBCAM });
+  handleClick = ({ key }) => {
+    switch (this.state.mode) {
+      case MUG:
+        this.setState({ mode: LAMETRIC });
         return;
-      case 'm':
-        this.setState({ mode: MUG });
-        return;
-      case 'i':
+      case LAMETRIC:
         this.setState({ mode: IPAD });
         return;
-      case 'l':
-        this.setState({ mode: LAMETRIC });
+      case IPAD:
+        this.setState({ mode: WEBCAM });
+        return;
+      case WEBCAM:
+        this.setState({ mode: MUG });
         return;
     }
   };
 
   componentWillUnmount() {
     clearInterval(this.timer);
-    document.body.removeEventListener('keyup', this.handleKeyUp);
+    document.body.removeEventListener('click', this.handleClick);
   }
 
   componentDidMount() {
 
-    document.body.addEventListener('keyup', this.handleKeyUp);
+    document.body.addEventListener('click', this.handleClick);
     this.timer = setInterval(() => this.handleTimer(), 100);
 
     const surface = d3.select(this.surface)
