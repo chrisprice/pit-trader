@@ -1,6 +1,7 @@
 import React from 'react';
+import { withRouter } from 'react-router-dom';
 
-export default ({ title, children }) =>
+const Layout = ({ title, children, history }) =>
     <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -17,8 +18,11 @@ export default ({ title, children }) =>
             height: '10vh',
             flexGrow: 0,
             flexShrink: 0
-        }}>
+        }}
+            onClick={() => history.push('/mobilenet')}>
             {title}
         </div>
         {children}
-    </div>
+    </div>;
+
+export default withRouter(Layout);
