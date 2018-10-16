@@ -1,6 +1,17 @@
 {
-  "main.css": "static/css/main.5125847e.css",
-  "main.css.map": "static/css/main.5125847e.css.map",
-  "main.js": "static/js/main.84bd1a61.js",
-  "main.js.map": "static/js/main.84bd1a61.js.map"
+  "main.css": "/pit-trader/static/css/main.43e11de3.chunk.css",
+  "main.js": "/pit-trader/static/js/main.85c3d694.chunk.js",
+  "main.js.map": "/pit-trader/static/js/main.85c3d694.chunk.js.map",
+  "static/js/1.285b0dfa.chunk.js": "/pit-trader/static/js/1.285b0dfa.chunk.js",
+  "static/js/1.285b0dfa.chunk.js.map": "/pit-trader/static/js/1.285b0dfa.chunk.js.map",
+  "runtime~main.js": "/pit-trader/static/js/runtime~main.e3835761.js",
+  "runtime~main.js.map": "/pit-trader/static/js/runtime~main.e3835761.js.map",
+  "static/media/index.css": "/pit-trader/static/media/monoton.e3552630.woff2",
+  "static/media/ipad.png": "/pit-trader/static/media/ipad.6c13a3a3.png",
+  "static/media/lametric.png": "/pit-trader/static/media/lametric.14791009.png",
+  "static/media/mug.png": "/pit-trader/static/media/mug.6f935464.png",
+  "static/css/main.43e11de3.chunk.css.map": "/pit-trader/static/css/main.43e11de3.chunk.css.map",
+  "index.html": "/pit-trader/index.html",
+  "precache-manifest.bd9a9f7e810e7b29ff31f6745e57df98.js": "/pit-trader/precache-manifest.bd9a9f7e810e7b29ff31f6745e57df98.js",
+  "service-worker.js": "/pit-trader/service-worker.js"
 }
