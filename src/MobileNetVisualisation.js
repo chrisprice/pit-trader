@@ -105,12 +105,9 @@ class MobileNetVisualisation extends Component {
 
   componentWillUnmount() {
     clearInterval(this.timer);
-    document.body.removeEventListener('click', this.handleClick);
   }
 
   componentDidMount() {
-
-    document.body.addEventListener('click', this.handleClick);
     this.timer = setInterval(() => this.handleTimer(), 100);
 
     const surface = d3.select(this.surface)
@@ -312,7 +309,8 @@ class MobileNetVisualisation extends Component {
         <d3fc-canvas
           use-device-pixel-ratio
           style={{ width: '100vw', height: '100vh' }}
-          ref={surface => this.surface = surface}></d3fc-canvas>
+          ref={surface => this.surface = surface}
+          onClick={this.handleClick}></d3fc-canvas>
       </React.Fragment>
     );
   }
