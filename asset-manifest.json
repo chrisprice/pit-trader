@@ -1,9 +1,9 @@
 {
   "main.css": "/pit-trader/static/css/main.8da8f706.chunk.css",
-  "main.js": "/pit-trader/static/js/main.456ff23f.chunk.js",
-  "main.js.map": "/pit-trader/static/js/main.456ff23f.chunk.js.map",
-  "static/js/1.d24322f6.chunk.js": "/pit-trader/static/js/1.d24322f6.chunk.js",
-  "static/js/1.d24322f6.chunk.js.map": "/pit-trader/static/js/1.d24322f6.chunk.js.map",
+  "main.js": "/pit-trader/static/js/main.3ab46e51.chunk.js",
+  "main.js.map": "/pit-trader/static/js/main.3ab46e51.chunk.js.map",
+  "static/js/1.c294dfaf.chunk.js": "/pit-trader/static/js/1.c294dfaf.chunk.js",
+  "static/js/1.c294dfaf.chunk.js.map": "/pit-trader/static/js/1.c294dfaf.chunk.js.map",
   "runtime~main.js": "/pit-trader/static/js/runtime~main.e3835761.js",
   "runtime~main.js.map": "/pit-trader/static/js/runtime~main.e3835761.js.map",
   "static/media/index.css": "/pit-trader/static/media/monoton.e3552630.woff2",
@@ -12,6 +12,6 @@
   "static/media/mug.png": "/pit-trader/static/media/mug.6f935464.png",
   "static/css/main.8da8f706.chunk.css.map": "/pit-trader/static/css/main.8da8f706.chunk.css.map",
   "index.html": "/pit-trader/index.html",
-  "precache-manifest.2b94095386e75f6449814c63d4774a0c.js": "/pit-trader/precache-manifest.2b94095386e75f6449814c63d4774a0c.js",
+  "precache-manifest.88a25745409567d06950be364eac1a9e.js": "/pit-trader/precache-manifest.88a25745409567d06950be364eac1a9e.js",
   "service-worker.js": "/pit-trader/service-worker.js"
 }
