@@ -1,7 +1,7 @@
 {
   "main.css": "/pit-trader/static/css/main.8da8f706.chunk.css",
-  "main.js": "/pit-trader/static/js/main.3ab46e51.chunk.js",
-  "main.js.map": "/pit-trader/static/js/main.3ab46e51.chunk.js.map",
+  "main.js": "/pit-trader/static/js/main.c1a8be7d.chunk.js",
+  "main.js.map": "/pit-trader/static/js/main.c1a8be7d.chunk.js.map",
   "static/js/1.c294dfaf.chunk.js": "/pit-trader/static/js/1.c294dfaf.chunk.js",
   "static/js/1.c294dfaf.chunk.js.map": "/pit-trader/static/js/1.c294dfaf.chunk.js.map",
   "runtime~main.js": "/pit-trader/static/js/runtime~main.e3835761.js",
@@ -12,6 +12,6 @@
   "static/media/mug.png": "/pit-trader/static/media/mug.6f935464.png",
   "static/css/main.8da8f706.chunk.css.map": "/pit-trader/static/css/main.8da8f706.chunk.css.map",
   "index.html": "/pit-trader/index.html",
-  "precache-manifest.88a25745409567d06950be364eac1a9e.js": "/pit-trader/precache-manifest.88a25745409567d06950be364eac1a9e.js",
+  "precache-manifest.e239c303d91d900efb7df99c77a2ecd2.js": "/pit-trader/precache-manifest.e239c303d91d900efb7df99c77a2ecd2.js",
   "service-worker.js": "/pit-trader/service-worker.js"
 }

@@ -20,19 +20,19 @@ self.__precacheManifest = [
     "url": "/pit-trader/static/js/runtime~main.e3835761.js"
   },
   {
-    "revision": "3ab46e5164bfa5cf917b",
-    "url": "/pit-trader/static/js/main.3ab46e51.chunk.js"
+    "revision": "c1a8be7dc6d60fa31bc1",
+    "url": "/pit-trader/static/js/main.c1a8be7d.chunk.js"
   },
   {
     "revision": "c294dfaf57f12f080c82",
     "url": "/pit-trader/static/js/1.c294dfaf.chunk.js"
   },
   {
-    "revision": "3ab46e5164bfa5cf917b",
+    "revision": "c1a8be7dc6d60fa31bc1",
     "url": "/pit-trader/static/css/main.8da8f706.chunk.css"
   },
   {
-    "revision": "291ba5d589fa95d9421021bc3c8e1b28",
+    "revision": "7f4553d3c424c6325b91248785ee8318",
     "url": "/pit-trader/index.html"
   }
 ];
