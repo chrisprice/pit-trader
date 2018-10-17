@@ -1,4 +1,4 @@
-import * as mobilenet from '@tensorflow-models/mobilenet';
+import { MobileNet } from '@tensorflow-models/mobilenet';
 
 const VERSION = 1;
 const ALPHA = 0.25;
@@ -7,7 +7,10 @@ let modelPromise = null;
 
 const loadModel = () => {
     if (modelPromise == null) {
-        modelPromise = mobilenet.load(VERSION, ALPHA);
+        const mobilenet = new MobileNet(VERSION, ALPHA);
+        mobilenet.path = 'mobilenet_v1_0.25_224/model.json';
+        modelPromise = mobilenet.load(VERSION, ALPHA)
+            .then(() => mobilenet);
     }
     return modelPromise;
 };
