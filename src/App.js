@@ -157,6 +157,26 @@ class App extends Component {
         }} >
           <Webcam onFrame={this.handleFrame} />
         </div>
+        <div style={{ 
+          left: 0,
+          width: 'calc((100vw - 100vh) / 2)', 
+          height: '100vh',
+          background: 'black',
+          opacity: 0.3,
+          position: 'absolute',
+          zIndex: -1
+          }}
+        />
+        <div style={{ 
+          right: 0,
+          width: 'calc((100vw - 100vh) / 2)', 
+          height: '100vh',
+          background: 'black',
+          opacity: 0.3,
+          position: 'absolute',
+          zIndex: -1
+          }}
+        />
         <Route exact path='/train' render={() =>
           <Trainer
             model={this.state.customModel}

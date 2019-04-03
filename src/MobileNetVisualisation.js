@@ -268,6 +268,22 @@ class MobileNetVisualisation extends Component {
   render() {
     return (
       <React.Fragment>
+        <div style={{ 
+          left: 0,
+          width: 'calc((100vw - 100vh) / 2)', 
+          height: '100vh',
+          background: 'black',
+          position: 'absolute'
+          }}
+        />
+        <div style={{ 
+          right: 0,
+          width: 'calc((100vw - 100vh) / 2)', 
+          height: '100vh',
+          background: 'black',
+          position: 'absolute'
+          }}
+        />
         <img
           ref={ref => this.mug = ref}
           src={require('./samples/mug.png')}
@@ -275,7 +291,7 @@ class MobileNetVisualisation extends Component {
             position: 'absolute',
             top: 0,
             bottom: 0,
-            objectFit: 'cover',
+            objectFit: 'contain',
             height: '100%',
             width: '100%',
             display: this.state.mode === MUG ? '' : 'none'
@@ -288,7 +304,7 @@ class MobileNetVisualisation extends Component {
             position: 'absolute',
             top: 0,
             bottom: 0,
-            objectFit: 'cover',
+            objectFit: 'contain',
             height: '100%',
             width: '100%',
             display: this.state.mode === IPAD ? '' : 'none'
@@ -301,7 +317,7 @@ class MobileNetVisualisation extends Component {
             position: 'absolute',
             top: 0,
             bottom: 0,
-            objectFit: 'cover',
+            objectFit: 'contain',
             height: '100%',
             width: '100%',
             display: this.state.mode === LAMETRIC ? '' : 'none'
