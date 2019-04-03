@@ -11,3 +11,6 @@ ReactDOM.render((
     </BrowserRouter>
 ), document.getElementById('root'));
 registerServiceWorker();
+
+
+// TODO: start with mobilenet disabled, then enable it

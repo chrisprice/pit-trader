@@ -59,7 +59,10 @@ class App extends Component {
   async loadModel() {
     try {
       const model = await load('indexeddb://model');
-      this.setState({ customModel: model });
+      this.setState({ 
+        customModel: model, 
+        mode: TRAINING_COMPLETE
+      });
     }
     catch (e) {
       console.warn(e);
@@ -88,7 +91,8 @@ class App extends Component {
           data: generator(100),
           lastData: generator(100),
           playerIndex: null
-        })
+        });
+        this.saveModel()
         return;
       case GAME_COMPLETE:
         this.props.history.push('/');
@@ -105,6 +109,9 @@ class App extends Component {
       switch (code) {
         case 'PageDown':
           this.advance();
+          return;
+        case 'PageUp':
+          this.loadModel();
           return;
       }
     });
@@ -147,36 +154,18 @@ class App extends Component {
   render() {
     return (
       <React.Fragment>
-        <div style={{
-          position: 'absolute',
-          width: '100vw',
-          height: '100vh',
-          overflow: 'hidden',
-          zIndex: -1,
-          opacity: 1
-        }} >
-          <Webcam onFrame={this.handleFrame} />
+        <div>
+          <div style={{
+            position: 'absolute',
+            width: '100vw',
+            height: '100vh',
+            overflow: 'hidden',
+            zIndex: -1,
+            opacity: 1
+          }} >
+            <Webcam onFrame={this.handleFrame} />
+          </div>
         </div>
-        <div style={{ 
-          left: 0,
-          width: 'calc((100vw - 100vh) / 2)', 
-          height: '100vh',
-          background: 'black',
-          opacity: 0.3,
-          position: 'absolute',
-          zIndex: -1
-          }}
-        />
-        <div style={{ 
-          right: 0,
-          width: 'calc((100vw - 100vh) / 2)', 
-          height: '100vh',
-          background: 'black',
-          opacity: 0.3,
-          position: 'absolute',
-          zIndex: -1
-          }}
-        />
         <Route exact path='/train' render={() =>
           <Trainer
             model={this.state.customModel}

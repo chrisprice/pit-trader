@@ -87,18 +87,34 @@ class MobileNetVisualisation extends Component {
   }
 
   handleClick = ({ key }) => {
+    if (!this.state.enabled) {
+      this.setState({ enabled: true });
+      return;
+    }
     switch (this.state.mode) {
       case MUG:
-        this.setState({ mode: LAMETRIC });
+        this.setState({ 
+          mode: LAMETRIC,
+          enabled: false
+        });
         return;
       case LAMETRIC:
-        this.setState({ mode: IPAD });
+        this.setState({
+          mode: IPAD,
+          enabled: false
+         });
         return;
       case IPAD:
-        this.setState({ mode: WEBCAM });
+        this.setState({
+          mode: WEBCAM,
+          enabled: false
+         });
         return;
       case WEBCAM:
-        this.setState({ mode: MUG });
+        this.setState({
+          mode: MUG,
+          enabled: false
+         });
         return;
     }
   };
@@ -241,7 +257,7 @@ class MobileNetVisualisation extends Component {
       const wordNetId = lookupWordNetId(className);
       const item = this.predictions(wordNetId);
       rollLeft(item.ranks, index);
-      rollLeft(item.probabilities, probability);
+      rollLeft(item.probabilities, this.state.enabled ? probability : 0);
     });
     if (this.surface != null) {
       this.surface.requestRedraw();

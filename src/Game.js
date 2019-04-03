@@ -4,6 +4,7 @@ import * as d3fc from 'd3fc';
 import Layout from './Layout';
 import { BUY, SELL } from './tensorflow/classifier';
 import { currency } from './util/format';
+import { coin, thump } from './sounds';
 
 export default class Game extends Component {
 
@@ -127,6 +128,11 @@ export default class Game extends Component {
     const shares = Math.floor(cash / open);
     const delta = -1 * unityPosition * shares * open + unityPosition * shares * close;
     const updatedCash = cash + delta;
+    if (delta > 0)  {
+      coin();
+    } else {
+      thump();
+    }
     this.setState({
       delta,
       cash: updatedCash,
