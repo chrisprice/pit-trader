@@ -243,8 +243,9 @@ class MobileNetVisualisation extends Component {
       rollLeft(item.ranks, index);
       rollLeft(item.probabilities, probability);
     });
-
-    this.surface.requestRedraw();
+    if (this.surface != null) {
+      this.surface.requestRedraw();
+    }
   }
 
   handleFrame(frame) {
